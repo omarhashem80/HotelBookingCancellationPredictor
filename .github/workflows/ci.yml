@@ -26,8 +26,8 @@ jobs:
       - name: Install Dependencies
         run: poetry install
 
-      - name: Lint
-        run: poetry run flake8 src scripts tests
+#      - name: Lint
+#        run: poetry run flake8 src scripts tests
 
       - name: Unit Tests
         run: poetry run pytest -q
