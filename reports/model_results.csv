@@ -1,0 +1,2 @@
+model,accuracy,precision,recall,f1,roc_auc,false_negative_rate,cost_sensitive_score,revenue_loss_estimate
+logistic,1.0,1.0,1.0,1.0,1.0,0.0,-0.0,0.0

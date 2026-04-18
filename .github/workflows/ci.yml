@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: poetry install
+
+      - name: Lint
+        run: poetry run flake8 src scripts tests
+
+      - name: Unit Tests
+        run: poetry run pytest -q
+
+      - name: Training Smoke Test
+        run: poetry run python scripts/train.py --models baseline,logistic --fast

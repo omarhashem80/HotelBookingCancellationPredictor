@@ -1,0 +1,63 @@
+{
+  "standard_metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "roc_auc": 1.0
+  },
+  "business_metrics": {
+    "false_negative_rate": 0.0,
+    "cost_sensitive_score": -0.0,
+    "revenue_loss_estimate": 0.0
+  },
+  "classification_report": {
+    "0": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 12644.0
+    },
+    "1": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 4802.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 17446.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 17446.0
+    }
+  },
+  "error_analysis": {
+    "confusion_breakdown": {
+      "tn": 12644,
+      "fp": 0,
+      "fn": 0,
+      "tp": 4802
+    },
+    "segment_error_analysis": {
+      "lead_time": {
+        "short": 0.0,
+        "medium": 0.0,
+        "long": 0.0,
+        "very_long": 0.0
+      },
+      "adr": {
+        "(-0.001, 71.535]": 0.0,
+        "(71.535, 97.795]": 0.0,
+        "(97.795, 133.74]": 0.0,
+        "(133.74, 451.5]": 0.0
+      }
+    }
+  }
+}
