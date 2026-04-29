@@ -86,3 +86,5 @@ compile_commands.json
 
 # Jupyter
 .ipynb_checkpoints/
+reports/figures/*
+data/raw/hotel_bookings.csv

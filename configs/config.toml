@@ -1,0 +1,4 @@
+[visualization]
+reports_path = "reports/figures"
+[data]
+data_path = "data/raw/hotel_bookings_with_holidays.csv"

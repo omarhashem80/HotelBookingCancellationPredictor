@@ -19,6 +19,11 @@ plotly = "^5.24.1"
 python-dotenv = "^1.0.1"
 joblib = "^1.4.2"
 jupyter = "^1.1.1"
+imblearn = "^0.0"
+tqdm = "^4.67.3"
+pycountry = "^26.2.16"
+great-expectations = "^1.17.0"
+kaleido = "0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
