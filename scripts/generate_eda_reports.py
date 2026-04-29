@@ -1,13 +1,12 @@
 import sys
 from pathlib import Path
+from src.data.cleaning import clean_data
+from src.utils.io import load_csv, read_config
+from src.visualization.eda_plots import create_eda_plots
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-
-from src.data.cleaning import clean_data
-from src.utils.io import load_csv, read_config
-from src.visualization.eda_plots import create_eda_plots
 
 
 def generate_eda_reports():

@@ -2,3 +2,8 @@
 reports_path = "reports/figures"
 [data]
 data_path = "data/raw/hotel_bookings_with_holidays.csv"
+processed_data_path = "data/processed/hotel_bookings_processed"
+[reports]
+base_path = "reports"
+[feature]
+target = "is_canceled"

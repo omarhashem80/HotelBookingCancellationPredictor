@@ -103,7 +103,11 @@ class TestCalcHolidayFeatures(unittest.TestCase):
     def setUp(self):
         self.holiday_dict = {
             ("US", 2022): [date(2022, 12, 25), date(2022, 12, 31)],
-            ("US", 2023): [date(2023, 1, 1), date(2023, 7, 4), date(2023, 12, 25)],
+            ("US", 2023): [
+                date(2023, 1, 1),
+                date(2023, 7, 4),
+                date(2023, 12, 25),
+            ],
             ("US", 2024): [date(2024, 1, 1)],
         }
 
@@ -143,7 +147,7 @@ class TestCalcHolidayFeatures(unittest.TestCase):
         is_hol, to_next, from_last = calc_holiday_features(arrival, "US", self.holiday_dict, 2023)
         self.assertEqual(is_hol, 0)
         self.assertEqual(from_last, 1)  # day after Dec 25
-        self.assertEqual(to_next, 6)    # Jan 1 2024
+        self.assertEqual(to_next, 6)  # Jan 1 2024
 
 
 if __name__ == "__main__":

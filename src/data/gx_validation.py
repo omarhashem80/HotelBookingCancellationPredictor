@@ -129,9 +129,7 @@ def completeness_met(lines, df):
         lines.append("  Columns With Nulls:")
         for col_name, count in cols_with_nulls.items():
             pct = count / len(df) * 100
-            lines.append(
-                "    {:33s} : {} ({:.2f}%)".format(col_name, count, pct)
-            )
+            lines.append("    {:33s} : {} ({:.2f}%)".format(col_name, count, pct))
 
 
 def holiday_met(lines, df):
@@ -168,9 +166,7 @@ def general_met(lines, df):
         lines.append("Max {}: {:.2f}".format(label, s.max()))
 
     lines.append("Cancellation Rate: {:.2%}".format(df["is_canceled"].mean()))
-    lines.append(
-        "Repeated Guest Rate: {:.2%}".format(df["is_repeated_guest"].mean())
-    )
+    lines.append("Repeated Guest Rate: {:.2%}".format(df["is_repeated_guest"].mean()))
     lines.append("Mean Adults: {:.2f}".format(df["adults"].mean()))
     lines.append("Median Adults: {:.2f}".format(df["adults"].median()))
     lines.append("Unique Countries: {}".format(df["country"].nunique()))
@@ -181,11 +177,7 @@ def general_met(lines, df):
 def uniqe_met(lines, df):
     exact_dupes = int(df.duplicated().sum())
     lines.append("Exact Duplicate Rows: {}".format(exact_dupes))
-    lines.append(
-        "Exact Duplicate Pct: {:.2%}".format(
-            exact_dupes / len(df) if len(df) > 0 else 0
-        )
-    )
+    lines.append("Exact Duplicate Pct: {:.2%}".format(exact_dupes / len(df) if len(df) > 0 else 0))
 
     uniqueness_cols = [
         "country",
@@ -200,11 +192,7 @@ def uniqe_met(lines, df):
         if col in df.columns:
             nuniq = df[col].nunique()
             prop = nuniq / len(df) if len(df) > 0 else 0
-            lines.append(
-                "  {:33s} :{} distinct ({:.4f} proportion)".format(
-                    col, nuniq, prop
-                )
-            )
+            lines.append("  {:33s} :{} distinct ({:.4f} proportion)".format(col, nuniq, prop))
 
 
 def _format_outlier_detail(lines, d, df):
@@ -217,9 +205,7 @@ def _format_outlier_detail(lines, d, df):
     lines.append("  Outliers    : {} ({:.2f}%)".format(d["count"], d["pct"]))
     if d["count"] > 0:
         col_data = df[d["col"]].dropna()
-        outlier_vals = col_data[
-            (col_data < d["lower"]) | (col_data > d["upper"])
-        ]
+        outlier_vals = col_data[(col_data < d["lower"]) | (col_data > d["upper"])]
         lines.append("  Min Outlier : {:.2f}".format(outlier_vals.min()))
         lines.append("  Max Outlier : {:.2f}".format(outlier_vals.max()))
         lines.append("  Mean Outlier: {:.2f}".format(outlier_vals.mean()))
@@ -235,9 +221,7 @@ def outlier_met(lines, df):
         series = df[col]
         if not np.issubdtype(series.dtype, np.number):
             continue
-        q1, q3, iqr, lower, upper, out_count, out_pct = compute_outliers_iqr(
-            series
-        )
+        q1, q3, iqr, lower, upper, out_count, out_pct = compute_outliers_iqr(series)
         total_outlier_flags += out_count
         outlier_details.append(
             {
@@ -283,9 +267,7 @@ def _append_corr_pairs(lines, label, pairs):
     if not pairs:
         lines.append("  None found")
     else:
-        for col_a, col_b, val in sorted(
-            pairs, key=lambda x: abs(x[2]), reverse=True
-        ):
+        for col_a, col_b, val in sorted(pairs, key=lambda x: abs(x[2]), reverse=True):
             lines.append("  {} <-> {} : {:.4f}".format(col_a, col_b, val))
 
 
@@ -310,7 +292,7 @@ def corr_met(lines, df):
         "days_from_last_holiday",
     ]
     available = [c for c in corr_cols if c in df.columns]
-    corr_matrix = df[available].corr(method='spearman')
+    corr_matrix = df[available].corr(method="spearman")
 
     high_pairs, moderate_pairs = [], []
     for i in range(len(available)):
@@ -323,9 +305,7 @@ def corr_met(lines, df):
                 moderate_pairs.append(pair)
 
     _append_corr_pairs(lines, "High Correlations (|r| >= 0.7)", high_pairs)
-    _append_corr_pairs(
-        lines, "Moderate Correlations (0.4 <= |r| < 0.7)", moderate_pairs
-    )
+    _append_corr_pairs(lines, "Moderate Correlations (0.4 <= |r| < 0.7)", moderate_pairs)
 
     lines.append("Key Target Correlations (vs is_canceled)")
     if "is_canceled" in corr_matrix.columns:
@@ -358,9 +338,7 @@ def corr_met(lines, df):
         for tf in target_features:
             if tf not in corr_matrix.columns:
                 continue
-            lines.append(
-                "    vs {:35s} : {:.4f}".format(tf, corr_matrix.loc[hf, tf])
-            )
+            lines.append("    vs {:35s} : {:.4f}".format(tf, corr_matrix.loc[hf, tf]))
         lines.append("")
 
 
@@ -411,8 +389,7 @@ def check_date_consistency(df):
     if "arrival_date_week_number" in df.columns:
         checks.append(
             (
-                parsed.dt.isocalendar().week.astype(int)
-                != df["arrival_date_week_number"],
+                parsed.dt.isocalendar().week.astype(int) != df["arrival_date_week_number"],
                 "arrival_date week vs arrival_date_week_number mismatch",
             )
         )
@@ -424,11 +401,7 @@ def check_date_consistency(df):
 
     invalid_dates = parsed.isna().sum() - df["arrival_date"].isna().sum()
     if invalid_dates > 0:
-        issues.append(
-            "arrival_date contains {} unparseable date strings".format(
-                invalid_dates
-            )
-        )
+        issues.append("arrival_date contains {} unparseable date strings".format(invalid_dates))
 
     return issues
 
@@ -439,13 +412,11 @@ def check_reservation_consistency(df):
     if "is_canceled" in df.columns and "reservation_status" in df.columns:
         cross_checks = [
             (
-                (df["is_canceled"] == 1)
-                & (df["reservation_status"] == "Check-Out"),
+                (df["is_canceled"] == 1) & (df["reservation_status"] == "Check-Out"),
                 "is_canceled=1 but reservation_status=Check-Out",
             ),
             (
-                (df["is_canceled"] == 0)
-                & (df["reservation_status"] == "Canceled"),
+                (df["is_canceled"] == 0) & (df["reservation_status"] == "Canceled"),
                 "is_canceled=0 but reservation_status=Canceled",
             ),
         ]
@@ -467,9 +438,7 @@ def check_reservation_consistency(df):
                 )
             )
 
-    if all(
-        c in df.columns for c in ["arrival_date", "reservation_status_date"]
-    ):
+    if all(c in df.columns for c in ["arrival_date", "reservation_status_date"]):
         arr = pd.to_datetime(df["arrival_date"], errors="coerce")
         res = pd.to_datetime(df["reservation_status_date"], errors="coerce")
         checkout_mask = (
@@ -480,9 +449,7 @@ def check_reservation_consistency(df):
         status_before = (checkout_mask & (res < arr)).sum()
         if status_before > 0:
             issues.append(
-                "Check-Out status date before arrival date: {} rows".format(
-                    status_before
-                )
+                "Check-Out status date before arrival date: {} rows".format(status_before)
             )
 
     if all(
@@ -518,9 +485,7 @@ def _add_regex_expectations(suite):
     ]
     for col, regex in regex_specs:
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToMatchRegex(
-                column=col, regex=regex
-            )
+            gx.expectations.ExpectColumnValuesToMatchRegex(column=col, regex=regex)
         )
 
 
@@ -528,9 +493,7 @@ def _add_set_expectations(suite):
     binary_cols = ["is_canceled", "is_repeated_guest", "is_holiday"]
     for col in binary_cols:
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToBeInSet(
-                column=col, value_set=[0, 1]
-            )
+            gx.expectations.ExpectColumnValuesToBeInSet(column=col, value_set=[0, 1])
         )
 
     set_specs = {
@@ -574,9 +537,7 @@ def _add_set_expectations(suite):
     }
     for col, values in set_specs.items():
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToBeInSet(
-                column=col, value_set=values
-            )
+            gx.expectations.ExpectColumnValuesToBeInSet(column=col, value_set=values)
         )
 
     suite.add_expectation(
@@ -599,17 +560,13 @@ def _add_range_expectations(suite):
     ]
     for col, mn, mx in range_specs:
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToBeBetween(
-                column=col, min_value=mn, max_value=mx
-            )
+            gx.expectations.ExpectColumnValuesToBeBetween(column=col, min_value=mn, max_value=mx)
         )
 
 
 def _add_statistical_expectations(suite):
     suite.add_expectation(
-        gx.expectations.ExpectTableRowCountToBeBetween(
-            min_value=119_000, max_value=120_000
-        )
+        gx.expectations.ExpectTableRowCountToBeBetween(min_value=119_000, max_value=120_000)
     )
 
     mean_specs = [
@@ -622,9 +579,7 @@ def _add_statistical_expectations(suite):
     ]
     for col, mn, mx in mean_specs:
         suite.add_expectation(
-            gx.expectations.ExpectColumnMeanToBeBetween(
-                column=col, min_value=mn, max_value=mx
-            )
+            gx.expectations.ExpectColumnMeanToBeBetween(column=col, min_value=mn, max_value=mx)
         )
 
     median_specs = [
@@ -634,9 +589,7 @@ def _add_statistical_expectations(suite):
     ]
     for col, mn, mx in median_specs:
         suite.add_expectation(
-            gx.expectations.ExpectColumnMedianToBeBetween(
-                column=col, min_value=mn, max_value=mx
-            )
+            gx.expectations.ExpectColumnMedianToBeBetween(column=col, min_value=mn, max_value=mx)
         )
 
     stdev_specs = [
@@ -647,9 +600,7 @@ def _add_statistical_expectations(suite):
     ]
     for col, mn, mx in stdev_specs:
         suite.add_expectation(
-            gx.expectations.ExpectColumnStdevToBeBetween(
-                column=col, min_value=mn, max_value=mx
-            )
+            gx.expectations.ExpectColumnStdevToBeBetween(column=col, min_value=mn, max_value=mx)
         )
 
 
@@ -678,15 +629,11 @@ def _add_null_expectations(suite):
         "days_from_last_holiday",
     ]
     for col in critical_not_null:
-        suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToNotBeNull(column=col)
-        )
+        suite.add_expectation(gx.expectations.ExpectColumnValuesToNotBeNull(column=col))
 
     for col in ["country", "children", "agent"]:
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToNotBeNull(
-                column=col, mostly=0.95
-            )
+            gx.expectations.ExpectColumnValuesToNotBeNull(column=col, mostly=0.95)
         )
 
 
@@ -709,9 +656,7 @@ def _add_non_negative_expectations(suite):
     ]
     for col in non_neg_cols:
         suite.add_expectation(
-            gx.expectations.ExpectColumnValuesToBeBetween(
-                column=col, min_value=0
-            )
+            gx.expectations.ExpectColumnValuesToBeBetween(column=col, min_value=0)
         )
 
 
@@ -783,18 +728,10 @@ EXPECTED_COLUMNS = [
 
 
 def _build_suite(context):
-    suite = context.suites.add(
-        gx.ExpectationSuite(name="hotel_validation_suite")
-    )
+    suite = context.suites.add(gx.ExpectationSuite(name="hotel_validation_suite"))
 
-    suite.add_expectation(
-        gx.expectations.ExpectTableColumnsToMatchSet(
-            column_set=EXPECTED_COLUMNS
-        )
-    )
-    suite.add_expectation(
-        gx.expectations.ExpectTableColumnCountToEqual(value=36)
-    )
+    suite.add_expectation(gx.expectations.ExpectTableColumnsToMatchSet(column_set=EXPECTED_COLUMNS))
+    suite.add_expectation(gx.expectations.ExpectTableColumnCountToEqual(value=36))
 
     _add_regex_expectations(suite)
     _add_null_expectations(suite)
@@ -834,11 +771,7 @@ def _report_dimension_results(lines, grouped):
         passes = sum(1 for r in dim_results if r.success)
         fails = len(dim_results) - passes
         lines.append("DIMENSION: {}".format(dim.upper()))
-        lines.append(
-            "  {} checks | {} passed | {} failed".format(
-                len(dim_results), passes, fails
-            )
-        )
+        lines.append("  {} checks | {} passed | {} failed".format(len(dim_results), passes, fails))
 
         for exp_result in dim_results:
             _report_single_expectation(lines, exp_result)
@@ -859,15 +792,9 @@ def _report_single_expectation(lines, exp_result):
     if not exp_result.success and exp_result.result:
         r = exp_result.result
         if r.get("unexpected_count"):
-            lines.append(
-                "    Issues: {} unexpected values".format(
-                    r["unexpected_count"]
-                )
-            )
+            lines.append("    Issues: {} unexpected values".format(r["unexpected_count"]))
         if r.get("partial_unexpected_list"):
-            lines.append(
-                "    Sample: {}".format(r["partial_unexpected_list"][:5])
-            )
+            lines.append("    Sample: {}".format(r["partial_unexpected_list"][:5]))
         if r.get("observed_value") is not None:
             lines.append("    Observed: {}".format(r["observed_value"]))
 
@@ -907,16 +834,12 @@ def _report_dimension_summary(lines, grouped, cross_field_issue_count):
         passes = sum(1 for r in dim_results if r.success)
         dim_status = "PASSED" if passes == len(dim_results) else "FAILED"
         lines.append(
-            "  {:25s} : {} ({}/{} passed)".format(
-                dim, dim_status, passes, len(dim_results)
-            )
+            "  {:25s} : {} ({}/{} passed)".format(dim, dim_status, passes, len(dim_results))
         )
 
     if cross_field_issue_count == 0:
         lines.append(
-            "  {:25s} : PASSED (all cross-field checks clean)".format(
-                "Consistency (CrossField)"
-            )
+            "  {:25s} : PASSED (all cross-field checks clean)".format("Consistency (CrossField)")
         )
     else:
         lines.append(
@@ -988,9 +911,7 @@ def run_hotel_validation(df):
     suite = _build_suite(context)
 
     validation_def = context.validation_definitions.add(
-        gx.ValidationDefinition(
-            name="hotel_validation", data=batch_def, suite=suite
-        )
+        gx.ValidationDefinition(name="hotel_validation", data=batch_def, suite=suite)
     )
 
     results = validation_def.run(batch_parameters={"dataframe": df})

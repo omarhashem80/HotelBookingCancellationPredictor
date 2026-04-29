@@ -9,90 +9,108 @@ from sklearn.metrics import classification_report
 
 from src.config.logging import configure_logging
 from src.config.settings import get_settings
-from src.evaluation.business_metrics import cost_sensitive_score, false_negative_rate, revenue_loss_estimate
-from src.evaluation.error_analysis import confusion_breakdown, segment_error_analysis
+from src.evaluation.business_metrics import (
+    cost_sensitive_score,
+    false_negative_rate,
+    revenue_loss_estimate,
+)
+from src.evaluation.error_analysis import (
+    confusion_breakdown,
+    segment_error_analysis,
+)
 from src.evaluation.metrics import calculate_classification_metrics
 from src.utils.io import load_csv, load_model
 from src.visualization.model_plots import plot_confusion, plot_roc
 
 
 def _json_safe(obj: object) -> object:
-	"""Recursively normalize objects so they can be serialized to JSON."""
-	if isinstance(obj, dict):
-		return {str(key): _json_safe(value) for key, value in obj.items()}
-	if isinstance(obj, list):
-		return [_json_safe(item) for item in obj]
-	if isinstance(obj, tuple):
-		return [_json_safe(item) for item in obj]
-	return obj
+    """Recursively normalize objects so they can be serialized to JSON."""
+    if isinstance(obj, dict):
+        return {str(key): _json_safe(value) for key, value in obj.items()}
+    if isinstance(obj, list):
+        return [_json_safe(item) for item in obj]
+    if isinstance(obj, tuple):
+        return [_json_safe(item) for item in obj]
+    return obj
 
 
 def main() -> None:
-	settings = get_settings()
-	root = settings.project_root
+    settings = get_settings()
+    root = settings.project_root
 
-	data_path = root / "data/processed/hotel_bookings_processed.csv"
-	model_path = root / "reports/best_model.pkl"
+    data_path = root / "data/processed/hotel_bookings_processed.csv"
+    model_path = root / "reports/best_model.pkl"
 
-	if not data_path.exists() or not model_path.exists():
-		raise FileNotFoundError("Processed data or trained model not found. Run make train first.")
+    if not data_path.exists() or not model_path.exists():
+        raise FileNotFoundError(
+            "Processed data or trained model not found. Run make train first."
+        )
 
-	df = load_csv(data_path)
-	X = df.drop(columns=[settings.target_column])
-	y = df[settings.target_column]
-	_, X_test, _, y_test = train_test_split(
-		X,
-		y,
-		test_size=0.2,
-		random_state=settings.random_state,
-		stratify=y,
-	)
+    df = load_csv(data_path)
+    X = df.drop(columns=[settings.target_column])
+    y = df[settings.target_column]
+    _, X_test, _, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.2,
+        random_state=settings.random_state,
+        stratify=y,
+    )
 
-	model = load_model(model_path)
-	y_pred = model.predict(X_test)
-	y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
+    model = load_model(model_path)
+    y_pred = model.predict(X_test)
+    y_prob = (
+        model.predict_proba(X_test)[:, 1]
+        if hasattr(model, "predict_proba")
+        else None
+    )
 
-	standard_metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
-	business = {
-		"false_negative_rate": false_negative_rate(y_test, pd.Series(y_pred)),
-		"cost_sensitive_score": cost_sensitive_score(y_test, pd.Series(y_pred)),
-	}
+    standard_metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
+    business = {
+        "false_negative_rate": false_negative_rate(y_test, pd.Series(y_pred)),
+        "cost_sensitive_score": cost_sensitive_score(
+            y_test, pd.Series(y_pred)
+        ),
+    }
 
-	if {"adr", "total_nights"}.issubset(X_test.columns):
-		business["revenue_loss_estimate"] = revenue_loss_estimate(
-			y_test,
-			pd.Series(y_pred),
-			X_test["adr"],
-			X_test["total_nights"],
-		)
+    if {"adr", "total_nights"}.issubset(X_test.columns):
+        business["revenue_loss_estimate"] = revenue_loss_estimate(
+            y_test,
+            pd.Series(y_pred),
+            X_test["adr"],
+            X_test["total_nights"],
+        )
 
-	errors = {
-		"confusion_breakdown": confusion_breakdown(y_test, pd.Series(y_pred)),
-		"segment_error_analysis": segment_error_analysis(X_test, y_test, pd.Series(y_pred)),
-	}
+    errors = {
+        "confusion_breakdown": confusion_breakdown(y_test, pd.Series(y_pred)),
+        "segment_error_analysis": segment_error_analysis(
+            X_test, y_test, pd.Series(y_pred)
+        ),
+    }
 
-	reports_dir = root / "reports"
-	reports_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir = root / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
 
-	plot_confusion(y_test, y_pred, reports_dir / "figures")
-	if y_prob is not None:
-		plot_roc(y_test, y_prob, reports_dir / "figures")
+    plot_confusion(y_test, y_pred, reports_dir / "figures")
+    if y_prob is not None:
+        plot_roc(y_test, y_prob, reports_dir / "figures")
 
-	output = {
-		"standard_metrics": standard_metrics,
-		"business_metrics": business,
-		"classification_report": classification_report(y_test, y_pred, output_dict=True),
-		"error_analysis": errors,
-	}
-	safe_output = _json_safe(output)
-	(reports_dir / "evaluation_report.json").write_text(
-		json.dumps(safe_output, indent=2, default=str),
-		encoding="utf-8",
-	)
-	print("Saved evaluation report to reports/evaluation_report.json")
+    output = {
+        "standard_metrics": standard_metrics,
+        "business_metrics": business,
+        "classification_report": classification_report(
+            y_test, y_pred, output_dict=True
+        ),
+        "error_analysis": errors,
+    }
+    safe_output = _json_safe(output)
+    (reports_dir / "evaluation_report.json").write_text(
+        json.dumps(safe_output, indent=2, default=str),
+        encoding="utf-8",
+    )
+    print("Saved evaluation report to reports/evaluation_report.json")
 
 
 if __name__ == "__main__":
-	configure_logging()
-	main()
-
+    configure_logging()
+    main()

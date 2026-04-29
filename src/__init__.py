@@ -1,2 +1,1 @@
 """Hotel cancellation prediction package."""
-

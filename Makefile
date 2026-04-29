@@ -15,7 +15,7 @@ evaluate:
 	$(PYTHON) -m scripts.evaluate
 
 test:
-	poetry run pytest -q
+	poetry run pytest
 
 lint:
 	poetry run flake8 src scripts tests
@@ -23,5 +23,5 @@ lint:
 format:
 	poetry run black src scripts tests
 
-eda:
-	poetry run jupyter notebook notebooks/
+eda: data/raw/hotel_bookings_with_holidays.csv
+	${PYTHON} scripts/generate_eda_reports.py

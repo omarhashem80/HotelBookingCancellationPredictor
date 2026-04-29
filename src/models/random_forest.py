@@ -3,7 +3,9 @@ from __future__ import annotations
 from sklearn.ensemble import RandomForestClassifier
 
 
-def get_random_forest_estimator(random_state: int = 42) -> RandomForestClassifier:
+def get_random_forest_estimator(
+    random_state: int = 42,
+) -> RandomForestClassifier:
     return RandomForestClassifier(
         n_estimators=300,
         random_state=random_state,
