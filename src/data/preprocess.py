@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Tuple
 
 import pandas as pd
@@ -7,8 +5,6 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-
-from src.data.cleaning import CATEGORICAL_COLS, DATE_COLS, FLOAT_COLS, INT_COLS
 
 
 def split_features_target(
@@ -19,7 +15,15 @@ def split_features_target(
     return X, y
 
 
+def cols_grouped_by_type(df: pd.DataFrame) -> tuple[list, list, list]:
+    numerical_cols = df.select_dtypes(["int64", "float64"]).columns.tolist()
+    categorical_cols = df.select_dtypes(["int8", "category"]).columns.tolist()
+    date_cols = df.select_dtypes(["datetime"]).columns.tolist()
+    return numerical_cols, categorical_cols, date_cols
+
+
 def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
+    numerical_cols, categorical_cols, date_cols = cols_grouped_by_type(X)
     numeric_pipeline = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="median")),
@@ -42,9 +46,9 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
 
     preprocessor = ColumnTransformer(
         transformers=[
-            ("num", numeric_pipeline, [*INT_COLS, *FLOAT_COLS]),
-            ("cat", categorical_pipeline, CATEGORICAL_COLS),
-            ("month", month_pipeline, DATE_COLS),
+            ("num", numeric_pipeline, numerical_cols),
+            ("cat", categorical_pipeline, categorical_cols),
+            ("month", month_pipeline, date_cols),
         ],
         remainder="drop",
     )

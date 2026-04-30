@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
 
 def generate_eda_reports():
     cfg = read_config()
-    data_path = Path(cfg["data"]["data_path"])
+    data_path = Path(cfg["data"]["merged_data_path"])
     df = load_csv(data_path)
     cleaned_df = clean_data(df)
     create_eda_plots(cleaned_df)

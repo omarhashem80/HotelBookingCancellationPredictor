@@ -35,7 +35,8 @@ import pandas as pd
 
 
 # def _add_holiday_distance(df: pd.DataFrame) -> pd.DataFrame:
-#     if {"days_to_next_holiday", "days_from_last_holiday"}.issubset(df.columns):
+#     if {"days_to_next_holiday", "days_from_last_holiday"}.issubset(df.
+# columns):
 #         df["holiday_distance_min"] = df[
 #             ["days_to_next_holiday", "days_from_last_holiday"]
 #         ].min(axis=1)
@@ -43,7 +44,11 @@ import pandas as pd
 
 
 def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
-    df["reservation_status_date"] = pd.to_datetime(df["reservation_status_date"])
+    if "reservation_status_date" not in df.columns.tolist():
+        return df
+    df["reservation_status_date"] = pd.to_datetime(
+        df["reservation_status_date"]
+    )
     df["reservation_status_year"] = df["reservation_status_date"].dt.year
     df["reservation_status_month"] = df["reservation_status_date"].dt.month
     df["reservation_status_day"] = df["reservation_status_date"].dt.day
@@ -57,7 +62,8 @@ def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
     featured = df.copy()
-    featured.drop("reservation_status", inplace=True)
+    if "reservation_status" in df.columns.tolist():
+        featured.drop("reservation_status", inplace=True)
     featured = add_datetime_features(featured)
     # featured = _add_total_guests(featured)
     # featured = _add_total_nights(featured)

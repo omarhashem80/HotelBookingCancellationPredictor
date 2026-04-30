@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 
 import pandas as pd
@@ -37,7 +35,9 @@ def load_and_merge(
 
     secondary_df = load_secondary_dataset(secondary_path)
     if merge_on is None:
-        common_cols = sorted(set(primary_df.columns).intersection(secondary_df.columns))
+        common_cols = sorted(
+            set(primary_df.columns).intersection(secondary_df.columns)
+        )
         if not common_cols:
             raise ValueError("No common columns found for dataset merge.")
         merge_on = common_cols[0]

@@ -60,20 +60,33 @@ def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     for col in DATE_COLS:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
-    df["agent"] = df["agent"].astype("str")
-    df = df[
-        ~((df["adults"] == 0) & (df["children"] == 0) & (df["babies"] == 0))
-    ]  # drop rows where no guests.
+    if "agent" in df.columns.tolist():
+        df["agent"] = df["agent"].astype("str")
+
     return df
 
 
-def reduce_cardinality(df: pd.DataFrame, col_name: str, top_k: int = 5) -> pd.DataFrame:
+def reduce_cardinality(
+    df: pd.DataFrame, col_name: str, top_k: int = 5
+) -> pd.DataFrame:
     top_k_categories = df[col_name].value_counts().head(top_k).index
-    df[col_name] = df[col_name].apply(lambda x: x if x in top_k_categories else "Other")
+    df[col_name] = df[col_name].apply(
+        lambda x: x if x in top_k_categories else "Other"
+    )
     return df
 
 
 def fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
+    cols_to_fill = [
+        "children",
+        "country",
+        "agent",
+        "is_holiday",
+        "days_to_next_holiday",
+        "days_from_last_holiday",
+    ]
+    if cols_to_fill not in df.columns.tolist():
+        return df
     df["children"].fillna(0, inplace=True)
     df["country"].fillna("Unknown", inplace=True)
     df["agent"].fillna(0, inplace=True)
@@ -84,10 +97,21 @@ def fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    cols_to_check = ["adults", "children", "babies"]
     cleaned = df.copy()
     cleaned = cleaned.drop_duplicates().reset_index(drop=True)
     for col, k in (("agent", 10), ("country", 5)):
-        cleaned = reduce_cardinality(cleaned, col, k)
+        if col in df.columns:
+            cleaned = reduce_cardinality(cleaned, col, k)
     cleaned = fill_missing_values(cleaned)
     cleaned = clean_dtypes(cleaned)
+    columns_exist = all([_ in df.columns.tolist() for _ in cols_to_check])
+    if columns_exist:
+        cleaned = cleaned[
+            ~(
+                (cleaned["adults"] == 0)
+                & (cleaned["children"] == 0)
+                & (cleaned["babies"] == 0)
+            )
+        ]  # drop rows where no guests.
     return cleaned.reset_index(drop=True)

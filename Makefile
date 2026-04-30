@@ -1,10 +1,14 @@
 PYTHON := poetry run python
 
-.PHONY: install preprocess train evaluate test lint format eda
+.PHONY: install preprocess merge_data validate train evaluate test lint format eda
 
 install:
 	poetry install
 
+merge_data: data/raw/hotel_bookings.csv
+	${PYTHON} scripts/merge_data.py
+validate: data/raw/hotel_bookings_with_holidays.csv
+	${PYTHON} scripts/validate_data.py
 preprocess:
 	$(PYTHON) -m scripts.preprocess
 

@@ -6,7 +6,7 @@ import bisect
 
 import pandas as pd
 import numpy as np
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from pathlib import Path
 from dotenv import load_dotenv
 import pycountry
@@ -18,8 +18,6 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY_CALENDERIFIC")
 API_BASE_URL = "https://calendarific.com/api/v2/holidays"
 CACHE_DIR = Path("../holiday_cache")
-INPUT_FILE = "../data/raw/hotel_bookings.csv"
-OUTPUT_FILE = "../data/raw/hotel_bookings_with_holidays.csv"
 RATE_LIMIT_SEC = 1.0
 
 
@@ -124,7 +122,9 @@ def _extract_holidays(data, country_a2, year):
     error_code = meta.get("code", 200) if isinstance(meta, dict) else 200
     if error_code != 200:
         error_detail = meta.get("error_detail", "Unknown error")
-        print(f"API error {error_code} for {country_a2}/{year}: {error_detail}")
+        print(
+            f"API error {error_code} for {country_a2}/{year}: {error_detail}"
+        )
         return None
     response_body = data.get("response", {})
     if isinstance(response_body, dict):
@@ -159,7 +159,11 @@ def fetch_holidays(country_a2, year):
         return []
     # parse dates
     holiday_dates = sorted(
-        {d for h in holidays_raw if isinstance(h, dict) and (d := _parse_date(h)) is not None}
+        {
+            d
+            for h in holidays_raw
+            if isinstance(h, dict) and (d := _parse_date(h)) is not None
+        }
     )
     _write_cache(cache, holiday_dates)
     return holiday_dates
@@ -174,7 +178,9 @@ def _cache_path(country_a2, year):
 
 def fetch_all_holidays(df):
     pairs = set()
-    for _, row in df.dropna(subset=["country_alpha2", "arrival_date"]).iterrows():
+    for _, row in df.dropna(
+        subset=["country_alpha2", "arrival_date"]
+    ).iterrows():
         a2 = row["country_alpha2"]
         year = int(row["arrival_date"].year)
         pairs.add((a2, year))
@@ -203,7 +209,7 @@ def fetch_all_holidays(df):
     return holiday_dict
 
 
-def save_disk(df: pd.DataFrame, output_path: str):
+def save_merged_dataset(df: pd.DataFrame, output_path: str):
     # intermediate columns
     cols_to_drop = ["arrival_date_month_num", "country_alpha2"]
     df.drop(columns=[c for c in cols_to_drop if c in df.columns], inplace=True)
@@ -219,11 +225,17 @@ def fill_new_df(df, holiday_dict):
     for idx, row in iterator:
         arrival = row["arrival_date"]
         a2 = row["country_alpha2"]
-        year = int(row["arrival_date_year"]) if pd.notna(row["arrival_date_year"]) else None
+        year = (
+            int(row["arrival_date_year"])
+            if pd.notna(row["arrival_date_year"])
+            else None
+        )
         if pd.isna(arrival) or a2 is None or year is None:
             results.append((np.nan, np.nan, np.nan))
         else:
-            results.append(calc_holiday_features(arrival, a2, holiday_dict, year))
+            results.append(
+                calc_holiday_features(arrival, a2, holiday_dict, year)
+            )
     df["is_holiday"] = [r[0] for r in results]
     df["days_to_next_holiday"] = [r[1] for r in results]
     df["days_from_last_holiday"] = [r[2] for r in results]
@@ -242,7 +254,11 @@ def calc_holiday_features(arrival, country_a2, holiday_dict, year):
     if not all_holidays:
         return np.nan, np.nan, np.nan
     all_holidays = sorted(set(all_holidays))
-    arrival_d = arrival.date() if isinstance(arrival, (datetime, pd.Timestamp)) else arrival
+    arrival_d = (
+        arrival.date()
+        if isinstance(arrival, (datetime, pd.Timestamp))
+        else arrival
+    )
     is_hol = 1 if arrival_d in all_holidays else 0
     idx = bisect.bisect_right(all_holidays, arrival_d)
     if idx < len(all_holidays):
@@ -257,15 +273,3 @@ def calc_holiday_features(arrival, country_a2, holiday_dict, year):
     if is_hol == 1:
         days_from_last = 0
     return is_hol, days_to_next, days_from_last
-
-
-# main
-def main():
-    df = load_and_prepare(INPUT_FILE)
-    holiday_dict = fetch_all_holidays(df)
-    df = fill_new_df(df, holiday_dict)
-    save_disk(df, OUTPUT_FILE)
-
-
-if __name__ == "__main__":
-    main()

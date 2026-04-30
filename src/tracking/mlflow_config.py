@@ -1,12 +1,9 @@
-from __future__ import annotations
-
 import os
 import re
 from pathlib import Path
 
 import mlflow
 from mlflow.tracking import MlflowClient
-
 
 _WINDOWS_DRIVE_URI_RE = re.compile(r"^file:/+([A-Za-z]):/")
 
@@ -44,7 +41,9 @@ def _repair_experiment_if_needed(experiment_name: str) -> None:
     client.create_experiment(experiment_name)
 
 
-def setup_mlflow(tracking_uri: str, experiment_name: str = "hotel-cancellation") -> None:
+def setup_mlflow(
+    tracking_uri: str, experiment_name: str = "hotel-cancellation"
+) -> None:
     """Configure MLflow tracking destination and experiment."""
     mlflow.set_tracking_uri(_normalize_tracking_uri(tracking_uri))
     _repair_experiment_if_needed(experiment_name)

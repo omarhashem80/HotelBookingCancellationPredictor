@@ -1,10 +1,10 @@
-from __future__ import annotations
-
 from sklearn.linear_model import LogisticRegression
 
 
 def get_logistic_estimator(random_state: int = 42) -> LogisticRegression:
-    return LogisticRegression(max_iter=3000, random_state=random_state, solver="liblinear")
+    return LogisticRegression(
+        max_iter=3000, random_state=random_state, solver="liblinear"
+    )
 
 
 def logistic_param_grid() -> dict:

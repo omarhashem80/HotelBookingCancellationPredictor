@@ -1,6 +1,5 @@
 import unittest
 import pandas as pd
-import numpy as np
 
 from src.data.gx_validation import (
     compute_outliers_iqr,
@@ -112,7 +111,12 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertTrue(any("is_canceled=1 but reservation_status=Check-Out" in i for i in issues))
+        self.assertTrue(
+            any(
+                "is_canceled=1 but reservation_status=Check-Out" in i
+                for i in issues
+            )
+        )
 
     def test_not_canceled_but_canceled_status(self):
         df = pd.DataFrame(
@@ -125,7 +129,12 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertTrue(any("is_canceled=0 but reservation_status=Canceled" in i for i in issues))
+        self.assertTrue(
+            any(
+                "is_canceled=0 but reservation_status=Canceled" in i
+                for i in issues
+            )
+        )
 
     def test_zero_guests(self):
         df = pd.DataFrame(

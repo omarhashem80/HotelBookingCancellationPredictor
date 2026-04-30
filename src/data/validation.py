@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 import pandas as pd
@@ -19,7 +17,9 @@ def _outlier_summary(df: pd.DataFrame) -> dict[str, int]:
     return summary
 
 
-def validate_dataframe(df: pd.DataFrame, target_col: str = "is_canceled") -> dict[str, Any]:
+def validate_dataframe(
+    df: pd.DataFrame, target_col: str = "is_canceled"
+) -> dict[str, Any]:
     """Run a compact set of data quality checks."""
     schema_issues: list[str] = []
     if target_col not in df.columns:

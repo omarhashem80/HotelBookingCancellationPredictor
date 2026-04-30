@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
@@ -24,7 +22,9 @@ from src.visualization.model_plots import plot_model_comparison
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train cancellation prediction models")
+    parser = argparse.ArgumentParser(
+        description="Train cancellation prediction models"
+    )
     parser.add_argument(
         "--models",
         type=str,
@@ -105,7 +105,9 @@ def main() -> None:
             if metrics.get("f1", 0.0) > best_f1:
                 best_f1 = metrics["f1"]
                 best_artifact.parent.mkdir(parents=True, exist_ok=True)
-                best_artifact.write_text(json.dumps(run_summary, indent=2), encoding="utf-8")
+                best_artifact.write_text(
+                    json.dumps(run_summary, indent=2), encoding="utf-8"
+                )
                 save_model(result.best_model, best_model_path)
 
     results_df = pd.DataFrame(all_results)

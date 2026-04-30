@@ -61,7 +61,9 @@ def _model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
     }
 
 
-def _get_param_grid(model_name: str, tune_profile: str) -> dict[str, list[Any]]:
+def _get_param_grid(
+    model_name: str, tune_profile: str
+) -> dict[str, list[Any]]:
     base_grids = {
         "baseline": {},
         "logistic": logistic_param_grid(),
@@ -94,7 +96,6 @@ def train_single_model(
     scoring: str = "f1",
     tune_profile: str = "full",
 ) -> TrainingResult:
-    """Train one model through a unified interface and return standardized outputs."""
     registry = _model_registry(random_state=random_state)
     if model_name not in registry:
         raise ValueError(f"Unknown model_name: {model_name}")
@@ -126,7 +127,9 @@ def train_single_model(
         catboost_params["class_weights"] = [1.0, imbalance_ratio]
         estimator.set_params(**catboost_params)
 
-        cat_cols = X_train.select_dtypes(include=["object", "category"]).columns.tolist()
+        cat_cols = X_train.select_dtypes(
+            include=["object", "category"]
+        ).columns.tolist()
         estimator.fit(
             X_train,
             y_train,
@@ -138,7 +141,9 @@ def train_single_model(
         )
         predictions = estimator.predict(X_test)
         probabilities = estimator.predict_proba(X_test)[:, 1]
-        metrics = calculate_classification_metrics(y_test, predictions, probabilities)
+        metrics = calculate_classification_metrics(
+            y_test, predictions, probabilities
+        )
         return TrainingResult(
             model_name=model_name,
             best_model=estimator,
@@ -157,7 +162,9 @@ def train_single_model(
         ]
     )
 
-    cv_strategy = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
+    cv_strategy = StratifiedKFold(
+        n_splits=cv, shuffle=True, random_state=random_state
+    )
     search = GridSearchCV(
         estimator=pipeline,
         param_grid=param_grid or {},
@@ -170,9 +177,13 @@ def train_single_model(
     best_model = search.best_estimator_
     predictions = best_model.predict(X_test)
     probabilities = (
-        best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
+        best_model.predict_proba(X_test)[:, 1]
+        if hasattr(best_model, "predict_proba")
+        else None
     )
-    metrics = calculate_classification_metrics(y_test, predictions, probabilities)
+    metrics = calculate_classification_metrics(
+        y_test, predictions, probabilities
+    )
 
     return TrainingResult(
         model_name=model_name,

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 from pathlib import Path
 
@@ -14,7 +12,7 @@ from src.utils.io import read_config, save_csv
 def run_preprocess() -> Path:
     cfg = read_config()
 
-    raw_path = Path(cfg["data"]["data_path"])
+    raw_path = Path(cfg["data"]["merged_data_path"])
     processed_path = Path(cfg["data"]["processed_data_path"])
     report_path = Path(cfg["reports"]["base_path"]) / "validation_report.json"
 
@@ -23,7 +21,9 @@ def run_preprocess() -> Path:
     validation_report = validate_dataframe(df, target_col="is_canceled")
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(validation_report, indent=2), encoding="utf-8")
+    report_path.write_text(
+        json.dumps(validation_report, indent=2), encoding="utf-8"
+    )
 
     cleaned = clean_data(df)
     featured = build_features(cleaned)

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,7 +19,9 @@ class Settings:
 def get_settings() -> Settings:
     """Load settings from environment variables with safe defaults."""
     return Settings(
-        data_path=os.getenv("DATA_PATH", "data/raw/hotel_bookings_with_holidays.csv"),
+        data_path=os.getenv(
+            "DATA_PATH", "data/raw/hotel_bookings_with_holidays.csv"
+        ),
         mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns"),
         random_state=int(os.getenv("RANDOM_STATE", "42")),
     )

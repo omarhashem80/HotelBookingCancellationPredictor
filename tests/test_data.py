@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 import pandas as pd
 
-from src.data.cleaning import clean_data
+from src.data.cleaning import clean_data, clean_dtypes
 from src.data.ingestion import merge_datasets
+from src.data.preprocess import cols_grouped_by_type
 from src.data.validation import validate_dataframe
 
 
@@ -36,3 +35,16 @@ def test_validate_dataframe_contains_required_sections() -> None:
     assert "duplicates" in report
     assert "schema_issues" in report
     assert "class_balance" in report
+
+
+def test_cols_grouped_by_type(toy_dataset):
+    cleaned_types_df = clean_dtypes(toy_dataset)
+    numerical_cols, categorical_cols, date_cols = cols_grouped_by_type(
+        cleaned_types_df
+    )
+    assert len(numerical_cols) == 9
+    assert len(categorical_cols) == 4
+    assert 'is_canceled' not in numerical_cols
+    assert 'adr' in numerical_cols
+    assert 'reserved_room_type' in categorical_cols
+    assert 'reservation_status_date' in date_cols
