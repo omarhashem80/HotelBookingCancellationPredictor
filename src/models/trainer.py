@@ -54,6 +54,7 @@ def run_model_pipeline(
     selector: Optional[Any] = None,
     sampler: Optional[Any] = None,
     random_state: int = 42,
+    cv_splits: int = 5,
 ) -> tuple[float, Any, dict[str, float], list[int]]:
 
     PipelineClass = ImbPipeline if sampler is not None else Pipeline
@@ -70,7 +71,7 @@ def run_model_pipeline(
 
     pipeline = PipelineClass(steps=steps)
 
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state)
+    cv = StratifiedKFold(n_splits=cv_splits, shuffle=True, random_state=random_state)
 
     param_grid = {f"model__{k}": v for k, v in param_grid.items()}
 
@@ -115,6 +116,7 @@ def train_single_model(
     test_size: float = 0.2,
     selector: Optional[Any] = None,
     sampler: Optional[Any] = None,
+    cv_splits: int = 5,
 ) -> TrainingResult:
 
     registry = _model_registry(random_state)
@@ -152,6 +154,7 @@ def train_single_model(
         selector=selector,
         sampler=sampler,
         random_state=random_state,
+        cv_splits=cv_splits,
     )
 
     return TrainingResult(

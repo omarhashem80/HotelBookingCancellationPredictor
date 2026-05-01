@@ -65,7 +65,7 @@ def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
     featured = df.copy()
     if "reservation_status" in df.columns.tolist():
-        featured.drop("reservation_status", inplace=True)
+        featured.drop(columns="reservation_status", inplace=True)
         logger.debug("Dropped reservation_status column")
     featured = add_datetime_features(featured)
     # featured = _add_total_guests(featured)
