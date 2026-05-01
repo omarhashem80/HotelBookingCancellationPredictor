@@ -1,6 +1,7 @@
 import argparse
 import json
 from pathlib import Path
+from typing import Optional
 
 import mlflow
 import pandas as pd
@@ -14,72 +15,96 @@ from src.evaluation.business_metrics import (
     revenue_loss_estimate,
 )
 from src.models.trainer import train_single_model
+
 from src.tracking.logger import log_metrics, log_model, log_params
 from src.tracking.mlflow_config import setup_mlflow
+
 from src.utils.helpers import set_seed
 from src.utils.io import load_csv, save_model
 from src.visualization.model_plots import plot_model_comparison
+
+from src.features.sampling import get_smote_sampler
+from src.features.selection import get_xgb_feature_selector
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train cancellation prediction models"
     )
+
     parser.add_argument(
         "--models",
         type=str,
-        default="baseline,logistic,random_forest,xgboost,catboost",
+        default="baseline,logistic,ada_boost,xgboost,catboost",
         help="Comma-separated model list",
     )
-    parser.add_argument("--cv", type=int, default=3)
+
     parser.add_argument(
-        "--fast",
+        "--use-smote",
         action="store_true",
-        help="Run a lightweight training configuration for smoke tests",
+        help="Apply SMOTE oversampling",
     )
+
+    parser.add_argument(
+        "--use-selector",
+        action="store_true",
+        help="Apply feature selection",
+    )
+
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+
     settings = get_settings()
     set_seed(settings.random_state)
     setup_mlflow(settings.mlflow_tracking_uri)
 
     root = settings.project_root
-    processed_path = root / "data/processed/hotel_bookings_processed.csv"
+    processed_path = root / "data/processed/hotel_bookings.csv"
+
     if not processed_path.exists():
         run_preprocess()
 
     df = load_csv(processed_path)
+
     selected_models = [m.strip() for m in args.models.split(",") if m.strip()]
-    cv = 2 if args.fast else args.cv
-    tune_profile = "fast" if args.fast else "full"
-    if args.fast and "baseline" not in selected_models:
-        selected_models = ["baseline", *selected_models[:1]]
+
+    sampler: Optional[object] = (
+        get_smote_sampler(settings.random_state) if args.use_smote else None
+    )
+
+    selector: Optional[object] = (
+        get_xgb_feature_selector(settings.random_state)
+        if args.use_selector
+        else None
+    )
 
     all_results: list[dict] = []
     best_f1 = -1.0
+
     best_artifact = root / "reports/best_model_metrics.json"
     best_model_path = root / "reports/best_model.pkl"
 
     for model_name in selected_models:
         with mlflow.start_run(run_name=model_name):
+
             result = train_single_model(
                 df=df,
                 model_name=model_name,
                 target_col=settings.target_column,
                 random_state=settings.random_state,
-                cv=cv,
-                tune_profile=tune_profile,
+                selector=selector,
+                sampler=sampler,
             )
 
-            business_fnr = false_negative_rate(
-                pd.Series(result.y_true), pd.Series(result.predictions)
-            )
-            business_cost = cost_sensitive_score(
-                pd.Series(result.y_true), pd.Series(result.predictions)
-            )
+            y_true = pd.Series(result.y_true)
+            y_pred = pd.Series(result.predictions)
+
+            business_fnr = false_negative_rate(y_true, y_pred)
+            business_cost = cost_sensitive_score(y_true, y_pred)
+
             metrics = {
                 **result.metrics,
                 "false_negative_rate": business_fnr,
@@ -87,13 +112,12 @@ def main() -> None:
             }
 
             if {"adr", "total_nights"}.issubset(result.X_test.columns):
-                revenue_loss = revenue_loss_estimate(
-                    pd.Series(result.y_true),
-                    pd.Series(result.predictions),
+                metrics["revenue_loss_estimate"] = revenue_loss_estimate(
+                    y_true,
+                    y_pred,
                     result.X_test["adr"],
                     result.X_test["total_nights"],
                 )
-                metrics["revenue_loss_estimate"] = revenue_loss
 
             log_params({"model_name": model_name, **result.best_params})
             log_metrics(metrics)
@@ -104,15 +128,27 @@ def main() -> None:
 
             if metrics.get("f1", 0.0) > best_f1:
                 best_f1 = metrics["f1"]
+
                 best_artifact.parent.mkdir(parents=True, exist_ok=True)
                 best_artifact.write_text(
-                    json.dumps(run_summary, indent=2), encoding="utf-8"
+                    json.dumps(run_summary, indent=2),
+                    encoding="utf-8",
                 )
+
                 save_model(result.best_model, best_model_path)
 
     results_df = pd.DataFrame(all_results)
-    results_df.to_csv(root / "reports/model_results.csv", index=False)
-    plot_model_comparison(results_df, root / "reports/figures")
+
+    reports_dir = root / "reports"
+    figures_dir = reports_dir / "figures"
+
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
+    results_df.to_csv(reports_dir / "model_results.csv", index=False)
+
+    plot_model_comparison(results_df, figures_dir)
+
     print("Training complete. Best model stored in reports/best_model.pkl")
 
 

@@ -1,21 +1,14 @@
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
 
-def get_random_forest_estimator(
+def get_ada_boost_estimator(
     random_state: int = 42,
-) -> RandomForestClassifier:
-    return RandomForestClassifier(
-        n_estimators=300,
-        random_state=random_state,
-        n_jobs=-1,
-        class_weight="balanced_subsample",
-    )
+) -> AdaBoostClassifier:
+    return AdaBoostClassifier(random_state=random_state,)
 
 
-def random_forest_param_grid() -> dict:
+def ada_boost_param_grid() -> dict:
     return {
-        "model__n_estimators": [300, 500],
-        "model__max_depth": [None, 10, 20],
-        "model__min_samples_split": [2, 5],
-        "model__min_samples_leaf": [1, 2],
+        'n_estimators': [50, 100, 200],
+        'learning_rate': [0.1, 0.5, 1.0],
     }

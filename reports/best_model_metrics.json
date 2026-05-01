@@ -1,11 +1,10 @@
 {
-  "model": "logistic",
-  "accuracy": 1.0,
-  "precision": 1.0,
-  "recall": 1.0,
-  "f1": 1.0,
-  "roc_auc": 1.0,
-  "false_negative_rate": 0.0,
-  "cost_sensitive_score": -0.0,
-  "revenue_loss_estimate": 0.0
+  "model": "xgboost",
+  "accuracy": 0.9976486780982967,
+  "precision": 0.9974916387959866,
+  "recall": 0.9939595917517184,
+  "f1": 0.9957224830464267,
+  "roc_auc": 0.9999516363815468,
+  "false_negative_rate": 0.006040408248281608,
+  "cost_sensitive_score": -157.0
 }

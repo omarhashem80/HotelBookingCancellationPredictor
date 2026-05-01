@@ -1,2 +1,2 @@
-model,accuracy,precision,recall,f1,roc_auc,false_negative_rate,cost_sensitive_score,revenue_loss_estimate
-logistic,1.0,1.0,1.0,1.0,1.0,0.0,-0.0,0.0
+model,accuracy,precision,recall,f1,roc_auc,false_negative_rate,cost_sensitive_score
+xgboost,0.9976486780982967,0.9974916387959866,0.9939595917517184,0.9957224830464267,0.9999516363815468,0.006040408248281608,-157.0

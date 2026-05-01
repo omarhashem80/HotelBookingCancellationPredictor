@@ -13,8 +13,8 @@ preprocess:
 	$(PYTHON) -m scripts.preprocess
 
 train:
-	$(PYTHON) -m scripts.train
-
+	$(PYTHON) -m scripts.train --models $(MODELS)
+	
 evaluate:
 	$(PYTHON) -m scripts.evaluate
 

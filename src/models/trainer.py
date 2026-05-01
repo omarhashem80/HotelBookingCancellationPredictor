@@ -1,30 +1,22 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
-from sklearn.model_selection import (
-    GridSearchCV,
-    StratifiedKFold,
-    train_test_split,
-)
+
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report
+
+from imblearn.pipeline import Pipeline as ImbPipeline
 
 from src.evaluation.metrics import calculate_classification_metrics
-from src.data.preprocess import (
-    build_preprocessor,
-    split_features_target,
-)
+from src.data.preprocess import build_preprocessor, split_features_target
+
 from src.models.baseline import get_baseline_estimator
-from src.models.catboost import (
-    HAS_CATBOOST,
-    catboost_param_grid,
-    get_catboost_estimator,
-)
+from src.models.catboost import catboost_param_grid, get_catboost_estimator
+from src.models.histboost import get_histboost_estimator, histboost_param_grid
 from src.models.logistic import get_logistic_estimator, logistic_param_grid
-from src.models.random_forest import (
-    get_random_forest_estimator,
-    random_forest_param_grid,
-)
+from src.models.random_forest import get_ada_boost_estimator, ada_boost_param_grid
 from src.models.xgboost import get_xgboost_estimator, xgboost_param_grid
 
 
@@ -42,48 +34,68 @@ class TrainingResult:
 def _model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
     return {
         "baseline": (get_baseline_estimator(), {}),
-        "logistic": (
-            get_logistic_estimator(random_state=random_state),
-            logistic_param_grid(),
-        ),
-        "random_forest": (
-            get_random_forest_estimator(random_state=random_state),
-            random_forest_param_grid(),
-        ),
-        "xgboost": (
-            get_xgboost_estimator(random_state=random_state),
-            xgboost_param_grid(),
-        ),
-        "catboost": (
-            get_catboost_estimator(random_state=random_state),
-            catboost_param_grid(),
-        ),
+        "logistic": (get_logistic_estimator(random_state), logistic_param_grid()),
+        "xgboost": (get_xgboost_estimator(random_state), xgboost_param_grid()),
+        "catboost": (get_catboost_estimator(random_state), catboost_param_grid()),
+        "histboost": (get_histboost_estimator(random_state), histboost_param_grid()),
+        "ada_boost": (get_ada_boost_estimator(random_state), ada_boost_param_grid()),
     }
 
 
-def _get_param_grid(
-    model_name: str, tune_profile: str
-) -> dict[str, list[Any]]:
-    base_grids = {
-        "baseline": {},
-        "logistic": logistic_param_grid(),
-        "random_forest": random_forest_param_grid(),
-        "xgboost": xgboost_param_grid(),
-        "catboost": catboost_param_grid(),
-    }
-    grid = base_grids[model_name]
+def run_model_pipeline(
+    name: str,
+    model: Any,
+    param_grid: dict[str, list[Any]],
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    selector: Optional[Any] = None,
+    sampler: Optional[Any] = None,
+    random_state: int = 42,
+) -> tuple[float, Any, dict[str, float], list[int]]:
 
-    if tune_profile == "fast" and grid:
-        reduced: dict[str, list[Any]] = {}
-        for key, values in grid.items():
-            if len(values) <= 2:
-                reduced[key] = values
-            else:
-                mid = len(values) // 2
-                reduced[key] = [values[0], values[mid]]
-        return reduced
+    PipelineClass = ImbPipeline if sampler is not None else Pipeline
 
-    return grid
+    steps = [("preprocessing", build_preprocessor(X_train))]
+
+    if selector is not None:
+        steps.append(("feature_selection", selector))
+
+    if sampler is not None:
+        steps.append(("sampler", sampler))
+
+    steps.append(("model", model))
+
+    pipeline = PipelineClass(steps=steps)
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state)
+
+    param_grid = {f"model__{k}": v for k, v in param_grid.items()}
+
+    search = GridSearchCV(
+        estimator=pipeline,
+        param_grid=param_grid or {},
+        cv=cv,
+        scoring="f1",
+        n_jobs=-1,
+        error_score="raise",
+    )
+
+    search.fit(X_train, y_train)
+
+    best_model = search.best_estimator_
+
+    y_pred = best_model.predict(X_test)
+    y_prob = (
+        best_model.predict_proba(X_test)[:, 1]
+        if hasattr(best_model, "predict_proba")
+        else None
+    )
+
+    metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
+
+    return search.best_score_, best_model, metrics, list(y_pred)
 
 
 def train_single_model(
@@ -92,105 +104,45 @@ def train_single_model(
     target_col: str = "is_canceled",
     random_state: int = 42,
     test_size: float = 0.2,
-    cv: int = 3,
-    scoring: str = "f1",
-    tune_profile: str = "full",
+    selector: Optional[Any] = None,
+    sampler: Optional[Any] = None,
 ) -> TrainingResult:
-    registry = _model_registry(random_state=random_state)
+
+    registry = _model_registry(random_state)
+
     if model_name not in registry:
-        raise ValueError(f"Unknown model_name: {model_name}")
+        raise ValueError(f"Unknown model: {model_name}")
 
-    X, y = split_features_target(df, target_col=target_col)
+    X, y = split_features_target(df, target_col)
+
     X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
+        X, y,
         test_size=test_size,
-        random_state=random_state,
         stratify=y,
+        random_state=random_state
     )
 
-    estimator, _ = registry[model_name]
-    param_grid = _get_param_grid(model_name, tune_profile=tune_profile)
+    model, param_grid = registry[model_name]
 
-    pos_count = int((y_train == 1).sum())
-    neg_count = int((y_train == 0).sum())
-    imbalance_ratio = float(neg_count / max(pos_count, 1))
-
-    if model_name == "xgboost":
-        estimator = get_xgboost_estimator(
-            random_state=random_state,
-            scale_pos_weight=imbalance_ratio,
-        )
-
-    if model_name == "catboost" and HAS_CATBOOST:
-        catboost_params = estimator.get_params()
-        catboost_params["class_weights"] = [1.0, imbalance_ratio]
-        estimator.set_params(**catboost_params)
-
-        cat_cols = X_train.select_dtypes(
-            include=["object", "category"]
-        ).columns.tolist()
-        estimator.fit(
-            X_train,
-            y_train,
-            cat_features=cat_cols,
-            eval_set=(X_test, y_test),
-            use_best_model=True,
-            early_stopping_rounds=30,
-            verbose=False,
-        )
-        predictions = estimator.predict(X_test)
-        probabilities = estimator.predict_proba(X_test)[:, 1]
-        metrics = calculate_classification_metrics(
-            y_test, predictions, probabilities
-        )
-        return TrainingResult(
-            model_name=model_name,
-            best_model=estimator,
-            metrics=metrics,
-            predictions=list(predictions),
-            best_params=estimator.get_params(),
-            y_true=list(y_test),
-            X_test=X_test,
-        )
-
-    preprocessor = build_preprocessor(X_train)
-    pipeline = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("model", estimator),
-        ]
-    )
-
-    cv_strategy = StratifiedKFold(
-        n_splits=cv, shuffle=True, random_state=random_state
-    )
-    search = GridSearchCV(
-        estimator=pipeline,
-        param_grid=param_grid or {},
-        scoring=scoring,
-        cv=cv_strategy,
-        n_jobs=-1,
-    )
-    search.fit(X_train, y_train)
-
-    best_model = search.best_estimator_
-    predictions = best_model.predict(X_test)
-    probabilities = (
-        best_model.predict_proba(X_test)[:, 1]
-        if hasattr(best_model, "predict_proba")
-        else None
-    )
-    metrics = calculate_classification_metrics(
-        y_test, predictions, probabilities
+    best_score, best_model, metrics, predictions = run_model_pipeline(
+        name=model_name,
+        model=model,
+        param_grid=param_grid,
+        X_train=X_train,
+        y_train=y_train,
+        X_test=X_test,
+        y_test=y_test,
+        selector=selector,
+        sampler=sampler,
+        random_state=random_state,
     )
 
     return TrainingResult(
         model_name=model_name,
         best_model=best_model,
         metrics=metrics,
-        predictions=list(predictions),
-        best_params=search.best_params_,
+        predictions=predictions,
+        best_params=best_model.get_params(),
         y_true=list(y_test),
         X_test=X_test,
     )

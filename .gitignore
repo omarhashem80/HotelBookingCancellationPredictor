@@ -72,7 +72,7 @@ compile_commands.json
 *.rar
 
 # Data science / ML artifacts
-#mlruns/
+mlruns/
 
 # Generated datasets and temporary data exports
 #data/processed/
