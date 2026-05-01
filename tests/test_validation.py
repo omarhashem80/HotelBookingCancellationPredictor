@@ -166,7 +166,3 @@ class TestAppendValueCounts(unittest.TestCase):
         self.assertIn("Test", text)
         self.assertIn("A", text)
         self.assertIn("B", text)
-
-
-if __name__ == "__main__":
-    unittest.main()

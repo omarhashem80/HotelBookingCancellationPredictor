@@ -44,3 +44,7 @@ def test_build_features_no_datetime_column_is_noop() -> None:
     df = pd.DataFrame({"lead_time": [5], "is_canceled": [0]})
     out = build_features(df)
     assert out.columns.tolist() == df.columns.tolist()
+
+
+def test_build_features():
+    pass

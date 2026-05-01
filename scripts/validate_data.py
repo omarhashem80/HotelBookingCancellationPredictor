@@ -37,7 +37,7 @@ def run_hotel_validation(df: pd.DataFrame, report_path: str):
 if __name__ == "__main__":
     configure_logging()
     cfg = read_config()
-    report_path = cfg["validation"]["report_path"]
+    report_path = cfg["reports"]["validation_path"]
     df = pd.read_csv(
         cfg["data"]["merged_data_path"],
         parse_dates=["reservation_status_date"],

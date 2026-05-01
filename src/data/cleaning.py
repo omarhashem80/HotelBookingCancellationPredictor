@@ -74,22 +74,20 @@ def reduce_cardinality(df: pd.DataFrame, col_name: str, top_k: int = 5) -> pd.Da
 
 
 def fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
-    cols_to_fill = [
-        "children",
-        "country",
-        "agent",
-        "is_holiday",
-        "days_to_next_holiday",
-        "days_from_last_holiday",
-    ]
-    if cols_to_fill not in df.columns.tolist():
-        return df
-    df["children"].fillna(0, inplace=True)
-    df["country"].fillna("Unknown", inplace=True)
-    df["agent"].fillna(0, inplace=True)
-    df["is_holiday"].fillna(0, inplace=True)
-    df["days_to_next_holiday"].fillna(-1, inplace=True)
-    df["days_from_last_holiday"].fillna(-1, inplace=True)
+
+    cols_df = df.columns.tolist()
+    if "children" in cols_df:
+        df["children"] = df["children"].fillna(0)
+    if "country" in cols_df:
+        df["country"] = df["country"].fillna("Unknown")
+    if "agent" in cols_df:
+        df["agent"] = df["agent"].fillna(0)
+    if "is_holiday" in cols_df:
+        df["is_holiday"] = df["is_holiday"].fillna(0)
+    if "days_to_next_holiday" in cols_df:
+        df["days_to_next_holiday"] = df["days_to_next_holiday"].fillna(-1)
+    if "days_from_last_holiday" in cols_df:
+        df["days_from_last_holiday"] = df["days_from_last_holiday"].fillna(-1)
     return df
 
 

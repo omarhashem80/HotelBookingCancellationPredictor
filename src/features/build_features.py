@@ -45,27 +45,31 @@ from loguru import logger
 
 
 def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
-    if "reservation_status_date" not in df.columns.tolist():
-        return df
+    if "reservation_status_date" in df.columns.tolist():
+        df["reservation_status_date"] = pd.to_datetime(
+            df["reservation_status_date"]
+        )
+        df["reservation_status_year"] = df["reservation_status_date"].dt.year
+        df["reservation_status_month"] = df["reservation_status_date"].dt.month
+        df["reservation_status_day"] = df["reservation_status_date"].dt.day
+    if "arrival_date" in df.columns.tolist():
+        df["arrival_date"] = pd.to_datetime(df["arrival_date"])
+        df["arrival_date_year"] = df["arrival_date"].dt.year
+        df["arrival_date_month"] = df["arrival_date"].dt.month
+        df["arrival_date_week_number"] = (
+            df["arrival_date"].dt.isocalendar().week
+        )
+        df["arrival_date_day_of_month"] = df["arrival_date"].dt.day
     logger.info("Adding datetime features")
-    df["reservation_status_date"] = pd.to_datetime(df["reservation_status_date"])
-    df["reservation_status_year"] = df["reservation_status_date"].dt.year
-    df["reservation_status_month"] = df["reservation_status_date"].dt.month
-    df["reservation_status_day"] = df["reservation_status_date"].dt.day
-    df["arrival_date"] = pd.to_datetime(df["arrival_date"])
-    df["arrival_date_year"] = df["arrival_date"].dt.year
-    df["arrival_date_month"] = df["arrival_date"].dt.month
-    df["arrival_date_week_number"] = df["arrival_date"].dt.isocalendar().week
-    df["arrival_date_day_of_month"] = df["arrival_date"].dt.day
     return df
 
 
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
     featured = df.copy()
     if "reservation_status" in df.columns.tolist():
-        featured.drop(columns="reservation_status", inplace=True)
-        logger.debug("Dropped reservation_status column")
+        featured.drop("reservation_status", axis=1, inplace=True)
     featured = add_datetime_features(featured)
+
     # featured = _add_total_guests(featured)
     # featured = _add_total_nights(featured)
     # featured = _add_room_change_flag(featured)

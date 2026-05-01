@@ -1,7 +1,11 @@
 from typing import Tuple
 
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
+from sklearn.preprocessing import (
+    StandardScaler,
+    OneHotEncoder,
+    FunctionTransformer,
+)
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -14,14 +18,19 @@ def split_features_target(
     X = df.drop(columns=[target_col])
     y = df[target_col]
     logger.debug(
-        "Split features/target: rows={}, features={}, target={}", len(df), X.shape[1], target_col
+        "Split features/target: rows={}, features={}, target={}",
+        len(df),
+        X.shape[1],
+        target_col,
     )
     return X, y
 
 
 def cols_grouped_by_type(df: pd.DataFrame) -> tuple[list, list, list]:
     numerical_cols = df.select_dtypes(include=["number"]).columns.tolist()
-    categorical_cols = df.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+    categorical_cols = df.select_dtypes(
+        include=["object", "category", "bool"]
+    ).columns.tolist()
     date_cols = df.select_dtypes(
         include=["datetime", "datetime64[ns]", "datetime64[ns, UTC]"]
     ).columns.tolist()
@@ -51,22 +60,30 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
         ]
     )
 
+    # Month pipeline: only impute, do NOT scale or one-hot encode
     month_pipeline = Pipeline(
         steps=[
             (
                 "month",
-                FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False),
+                FunctionTransformer(
+                    lambda s: s.apply(lambda col: col.dt.month), validate=False
+                ),
             ),
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )
 
+    transformers = [
+        ("num", numeric_pipeline, numerical_cols),
+        ("cat", categorical_pipeline, categorical_cols),
+    ]
+
+    # Only add month transformer if month columns exist
+    if date_cols:
+        transformers.append(("month", month_pipeline, date_cols))
+
     preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_pipeline, numerical_cols),
-            ("cat", categorical_pipeline, categorical_cols),
-            ("month", month_pipeline, date_cols),
-        ],
+        transformers=transformers,
         remainder="drop",
     )
 

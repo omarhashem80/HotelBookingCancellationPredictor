@@ -1,12 +1,11 @@
-[visualization]
-reports_path = "reports/figures"
 [data]
-raw_data_path = "data/raw/hotel_bookings.csv"
-merged_data_path = "data/raw/hotel_bookings_with_holidays.csv"
-processed_data_path = "data/processed/hotel_bookings_processed"
-[reports]
-base_path = "reports"
+merged_data_path    = "data/raw/hotel_bookings_with_holidays.csv"
+processed_data_path = "data/processed/hotel_bookings_processed.csv"
+raw_data_path       = "data/raw/hotel_bookings.csv"
+
 [feature]
 target = "is_canceled"
-[validation]
-report_path = "reports/validation_report.txt"
+
+[reports]
+figures_path    = "reports/figures"
+validation_path = "reports/validation_report.txt"

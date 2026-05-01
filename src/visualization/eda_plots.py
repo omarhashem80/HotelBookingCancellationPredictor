@@ -9,7 +9,9 @@ from plotly.subplots import make_subplots
 from src.utils.io import read_config
 
 
-def create_histogram_with_box_plot(df: pd.DataFrame, col_name: str, base_path: Path):
+def create_histogram_with_box_plot(
+    df: pd.DataFrame, col_name: str, base_path: Path
+):
     plot_name = f"{col_name}_dist_histogram_box_plot"
     fig = make_subplots(rows=2, cols=1)
     histo = go.Histogram(x=df[col_name], name="Histogram")
@@ -23,14 +25,18 @@ def create_histogram_with_box_plot(df: pd.DataFrame, col_name: str, base_path: P
 
 def create_pie_chart(df: pd.DataFrame, col_name: str, base_path: Path):
     plot_name = f"{col_name}_dist_pie_chart"
-    fig = px.pie(names=df[col_name], hole=0.3, title=f"Distribution of {col_name}")
+    fig = px.pie(
+        names=df[col_name], hole=0.3, title=f"Distribution of {col_name}"
+    )
     fig.update_traces(textinfo="percent+label")
     fig.update_layout(height=800)
     save_path = base_path / f"{plot_name}.jpg"
     fig.write_image(save_path)
 
 
-def create_bar_chart(df: pd.DataFrame, col_name: str, base_path: Path, top_n=10):
+def create_bar_chart(
+    df: pd.DataFrame, col_name: str, base_path: Path, top_n=10
+):
     plot_name = f"{col_name}_top_frequent_bar_plot"
     dff = df[col_name].value_counts().head(top_n).reset_index()
     dff.columns = [col_name, "count"]
@@ -41,10 +47,17 @@ def create_bar_chart(df: pd.DataFrame, col_name: str, base_path: Path, top_n=10)
     fig.write_image(save_path)
 
 
-def plot_time_series(df: pd.DataFrame, col_name: str, year: int, base_path: Path):
+def plot_time_series(
+    df: pd.DataFrame, col_name: str, year: int, base_path: Path
+):
     plot_name = f"{col_name}_time_series_plot_at_{year}"
     dff = df[df[col_name].dt.year == year]
-    dff = dff.groupby(col_name).size().reset_index(name="count").sort_values(col_name)
+    dff = (
+        dff.groupby(col_name)
+        .size()
+        .reset_index(name="count")
+        .sort_values(col_name)
+    )
     fig = px.line(dff, x=col_name, y="count")
     save_path = base_path / f"{plot_name}.jpg"
     fig.write_image(save_path)
@@ -72,9 +85,15 @@ def plot_time_series_overlay(df: pd.DataFrame, col_name: str, base_path: Path):
 def generate_country_plot(df: pd.DataFrame, base_path: Path):
     plot_name = "Home_Country_Of_Guests"
     country_data = (
-        df.groupby("country")["adults"].sum().sort_values(ascending=False).head(20).reset_index()
+        df.groupby("country")["adults"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(20)
+        .reset_index()
     )
-    country_data["adults"] = (country_data["adults"] / country_data["adults"].sum()) * 100
+    country_data["adults"] = (
+        country_data["adults"] / country_data["adults"].sum()
+    ) * 100
     country_data.columns = ["country", "Guests in %"]
     guest_map = px.choropleth(
         country_data,
@@ -97,7 +116,7 @@ def univariate_eda_plots(
     df: pd.DataFrame,
 ):
     cfg = read_config()
-    base_path = Path(cfg["visualization"]["reports_path"]) / "univariate_plots/"
+    base_path = Path(cfg["reports"]["figures_path"]) / "univariate_plots/"
     base_path.mkdir(parents=True, exist_ok=True)
     for col in numerical_cols:
         create_histogram_with_box_plot(df, col, base_path)
@@ -114,9 +133,13 @@ def univariate_eda_plots(
         plot_time_series_overlay(df, col, base_path)
 
 
-def plot_mean_numerical_by_cancellation(df: pd.DataFrame, col_name: str, base_path: Path):
+def plot_mean_numerical_by_cancellation(
+    df: pd.DataFrame, col_name: str, base_path: Path
+):
     plot_name = f"{col_name}_cancellation_bar"
-    title = f'Mean of {col_name.replace("_"," ").title()} by Cancellation Status'
+    title = (
+        f'Mean of {col_name.replace("_"," ").title()} by Cancellation Status'
+    )
     labels = {
         "is_canceled": "Is Canceled",
         col_name: f'Mean  {col_name.replace("_"," ").title()}',
@@ -136,9 +159,15 @@ def plot_mean_numerical_by_cancellation(df: pd.DataFrame, col_name: str, base_pa
 
 
 # TODO: Fix the issues in this function
-def plot_mean_categorical_by_cancellation(df: pd.DataFrame, col_name: str, base_path: Path):
+def plot_mean_categorical_by_cancellation(
+    df: pd.DataFrame, col_name: str, base_path: Path
+):
     plot_name = f"{col_name}_cancellation_bar"
-    dff = df.groupby(col_name)["is_canceled"].value_counts(normalize=True).reset_index()
+    dff = (
+        df.groupby(col_name)["is_canceled"]
+        .value_counts(normalize=True)
+        .reset_index()
+    )
     # dff = dff.melt(
     #     id_vars=col_name, var_name="is_canceled", value_name="proportion"
     # )
@@ -160,7 +189,9 @@ def plot_mean_categorical_by_cancellation(df: pd.DataFrame, col_name: str, base_
     fig.write_image(save_path)
 
 
-def plot_years_overlay_canceled(df: pd.DataFrame, date_col: str, base_path: Path):
+def plot_years_overlay_canceled(
+    df: pd.DataFrame, date_col: str, base_path: Path
+):
     plot_name = f"{date_col}_cancellation_overlay"
     df = df[df["is_canceled"] == 1].copy()
     df["year"] = df[date_col].dt.year
@@ -178,7 +209,9 @@ def plot_years_overlay_canceled(df: pd.DataFrame, date_col: str, base_path: Path
     fig.write_image(save_path)
 
 
-def plot_time_series_canceled(df: pd.DataFrame, date_col: str, year: str, base_path: Path):
+def plot_time_series_canceled(
+    df: pd.DataFrame, date_col: str, year: str, base_path: Path
+):
     plot_name = f"{date_col}_cancellation_overlay"
     dff = df.copy()
     dff = dff[dff[date_col].dt.year == year]
@@ -194,7 +227,10 @@ def plot_time_series_canceled(df: pd.DataFrame, date_col: str, year: str, base_p
     fig.write_image(save_path)
 
 
-def plot_all_days_trend_vs_canceled(df: pd.DataFrame, date_col: str, base_path: Path):
+def plot_all_days_trend_vs_canceled(
+    df: pd.DataFrame, date_col: str, base_path: Path
+):
+    plot_name = f"{date_col}_days_trend_vs_canceled"
     dff = df.copy()
     dff["day_of_year"] = dff[date_col].dt.dayofyear
 
@@ -206,9 +242,14 @@ def plot_all_days_trend_vs_canceled(df: pd.DataFrame, date_col: str, base_path: 
     )
     dff["status"] = dff["is_canceled"].map({0: "Not Canceled", 1: "Canceled"})
 
+    fig = px.line(dff, x="day_of_year", y="count", color="status")
+    save_path = base_path / f"{plot_name}.jpg"
 
-def correlation_matrix(df: pd.DataFrame, numerical_cols: list, base_path: Path):
-    plot_name = "correlation_matrix_for_numerical_features"
+
+def correlation_matrix(
+    df: pd.DataFrame, numerical_cols: list, base_path: Path
+):
+    plot_name = f"correlation_matrix_for_numerical_features"
     fig = px.imshow(
         df[numerical_cols].corr(numeric_only=True, method="spearman"),
         text_auto=".2f",
@@ -226,7 +267,7 @@ def bivariate_eda_plots(
     df: pd.DataFrame,
 ):
     cfg = read_config()
-    base_path = Path(cfg["visualization"]["reports_path"]) / "bivariate_plots/"
+    base_path = Path(cfg["reports"]["figures_path"]) / "bivariate_plots/"
     base_path.mkdir(parents=True, exist_ok=True)
     correlation_matrix(df, numerical_cols, base_path)
     for col in numerical_cols:
@@ -244,8 +285,18 @@ def bivariate_eda_plots(
 
 
 def create_eda_plots(type_normalized_df: pd.DataFrame):
-    numerical_cols = type_normalized_df.select_dtypes(include=np.number).columns.tolist()
-    categorical_cols = type_normalized_df.select_dtypes(include="category").columns.tolist()
-    datetime_cols = type_normalized_df.select_dtypes(include="datetime64[ns]").columns.tolist()
-    univariate_eda_plots(numerical_cols, categorical_cols, datetime_cols, type_normalized_df)
-    bivariate_eda_plots(numerical_cols, categorical_cols, datetime_cols, type_normalized_df)
+    numerical_cols = type_normalized_df.select_dtypes(
+        include=np.number
+    ).columns.tolist()
+    categorical_cols = type_normalized_df.select_dtypes(
+        include="category"
+    ).columns.tolist()
+    datetime_cols = type_normalized_df.select_dtypes(
+        include="datetime64[ns]"
+    ).columns.tolist()
+    univariate_eda_plots(
+        numerical_cols, categorical_cols, datetime_cols, type_normalized_df
+    )
+    bivariate_eda_plots(
+        numerical_cols, categorical_cols, datetime_cols, type_normalized_df
+    )

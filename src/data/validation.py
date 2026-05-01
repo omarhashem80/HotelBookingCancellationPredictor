@@ -1,7 +1,6 @@
 from typing import Any
 
 import pandas as pd
-from loguru import logger
 
 
 def _outlier_summary(df: pd.DataFrame) -> dict[str, int]:
@@ -16,30 +15,3 @@ def _outlier_summary(df: pd.DataFrame) -> dict[str, int]:
         outliers = ((df[col] < lower) | (df[col] > upper)).sum()
         summary[col] = int(outliers)
     return summary
-
-
-def validate_dataframe(df: pd.DataFrame, target_col: str = "is_canceled") -> dict[str, Any]:
-    """Run a compact set of data quality checks."""
-    schema_issues: list[str] = []
-    if target_col not in df.columns:
-        schema_issues.append(f"Missing target column: {target_col}")
-
-    result = {
-        "missing_values": df.isna().sum().to_dict(),
-        "duplicates": int(df.duplicated().sum()),
-        "schema_issues": schema_issues,
-        "class_balance": (
-            df[target_col].value_counts(normalize=True).to_dict()
-            if target_col in df.columns
-            else {}
-        ),
-        "outlier_summary": _outlier_summary(df),
-    }
-    logger.info(
-        "Validation complete: duplicates={}, schema_issues={}, rows={}, cols={}",
-        result["duplicates"],
-        len(schema_issues),
-        df.shape[0],
-        df.shape[1],
-    )
-    return result
