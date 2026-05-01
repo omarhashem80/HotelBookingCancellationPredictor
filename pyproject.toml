@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Production-grade hotel booking cancellation prediction pipeline"
 authors = ["Team 7"]
 readme = "README.md"
-packages = [{ include = "src" }]
+packages = [
+    { include = "src" },
+    { include = "commands" }
+]
+
+[tool.poetry.scripts]
+run-tests = "commands.run_tests:run_tests"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
