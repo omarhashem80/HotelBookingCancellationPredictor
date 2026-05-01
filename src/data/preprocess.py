@@ -1,10 +1,11 @@
 from typing import Tuple
 
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from loguru import logger
 
 
 def split_features_target(
@@ -12,18 +13,26 @@ def split_features_target(
 ) -> Tuple[pd.DataFrame, pd.Series]:
     X = df.drop(columns=[target_col])
     y = df[target_col]
+    logger.debug("Split features/target: rows={}, features={}, target={}", len(df), X.shape[1], target_col)
     return X, y
 
 
 def cols_grouped_by_type(df: pd.DataFrame) -> tuple[list, list, list]:
-    numerical_cols = df.select_dtypes(["int64", "float64"]).columns.tolist()
-    categorical_cols = df.select_dtypes(["int8", "category"]).columns.tolist()
-    date_cols = df.select_dtypes(["datetime"]).columns.tolist()
+    numerical_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    categorical_cols = df.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+    date_cols = df.select_dtypes(include=["datetime", "datetime64[ns]", "datetime64[ns, UTC]"]).columns.tolist()
+    logger.debug(
+        "Grouped columns: numerical={}, categorical={}, datetime={}",
+        len(numerical_cols),
+        len(categorical_cols),
+        len(date_cols),
+    )
     return numerical_cols, categorical_cols, date_cols
 
 
 def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
     numerical_cols, categorical_cols, date_cols = cols_grouped_by_type(X)
+    logger.debug("Building preprocessor with {} features", X.shape[1])
     numeric_pipeline = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="median")),
@@ -40,6 +49,7 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
 
     month_pipeline = Pipeline(
         steps=[
+            ("month", FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False)),
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )

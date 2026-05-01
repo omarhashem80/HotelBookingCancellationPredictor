@@ -1,4 +1,5 @@
 import pandas as pd
+from loguru import logger
 
 # def _add_total_guests(df: pd.DataFrame) -> pd.DataFrame:
 #     if {"adults", "children", "babies"}.issubset(df.columns):
@@ -46,6 +47,7 @@ import pandas as pd
 def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
     if "reservation_status_date" not in df.columns.tolist():
         return df
+    logger.info("Adding datetime features")
     df["reservation_status_date"] = pd.to_datetime(
         df["reservation_status_date"]
     )
@@ -64,6 +66,7 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     featured = df.copy()
     if "reservation_status" in df.columns.tolist():
         featured.drop("reservation_status", inplace=True)
+        logger.debug("Dropped reservation_status column")
     featured = add_datetime_features(featured)
     # featured = _add_total_guests(featured)
     # featured = _add_total_nights(featured)

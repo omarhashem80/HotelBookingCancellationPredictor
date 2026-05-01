@@ -11,6 +11,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import pycountry
 from tqdm import tqdm
+from loguru import logger
 
 load_dotenv()
 
@@ -75,11 +76,11 @@ def load_and_prepare(path):
     )
     invalid_dates = df["arrival_date"].isna().sum()
     if invalid_dates > 0:
-        print(f"{invalid_dates} rows could nota valid arrival_date")
-    print("converting country codes (alpha-3 -> alpha-2)")
+        logger.warning("{} rows could not parse arrival_date", invalid_dates)
+    logger.info("Converting country codes (alpha-3 -> alpha-2)")
     df["country_alpha2"] = df["country"].apply(alpha3_to_alpha2)
     unmapped = df["country_alpha2"].isna().sum()
-    print(f"{unmapped} rows have unmapped /missing country codes")
+    logger.warning("{} rows have unmapped or missing country codes", unmapped)
     return df
 
 
@@ -122,8 +123,12 @@ def _extract_holidays(data, country_a2, year):
     error_code = meta.get("code", 200) if isinstance(meta, dict) else 200
     if error_code != 200:
         error_detail = meta.get("error_detail", "Unknown error")
-        print(
-            f"API error {error_code} for {country_a2}/{year}: {error_detail}"
+        logger.warning(
+            "API error {} for {}/{}: {}",
+            error_code,
+            country_a2,
+            year,
+            error_detail,
         )
         return None
     response_body = data.get("response", {})
@@ -132,9 +137,11 @@ def _extract_holidays(data, country_a2, year):
     if isinstance(response_body, list):
         return response_body
 
-    print(
-        f"Unexpected response format for {country_a2}/{year}: "
-        f"type={type(response_body).__name__}"
+    logger.warning(
+        "Unexpected response format for {}/{}: type={}",
+        country_a2,
+        year,
+        type(response_body).__name__,
     )
     return None
 
@@ -150,7 +157,7 @@ def fetch_holidays(country_a2, year):
         resp.raise_for_status()
         data = resp.json()
     except requests.exceptions.RequestException as e:
-        print(f"API request error for {country_a2}/{year}: {e}")
+        logger.warning("API request error for {}/{}: {}", country_a2, year, e)
         _write_cache(cache, [])
         return []
     holidays_raw = _extract_holidays(data, country_a2, year)
@@ -198,7 +205,7 @@ def fetch_all_holidays(df):
             holidays = fetch_holidays(a2, year)
             holiday_dict[(a2, year)] = holidays
         except Exception as e:
-            print(f"unexpected error for{a2}/{year}: {e}")
+            logger.warning("Unexpected error for {}/{}: {}", a2, year, e)
             holiday_dict[(a2, year)] = []
             errors += 1
             with open(_cache_path(a2, year), "w") as f:
@@ -206,6 +213,7 @@ def fetch_all_holidays(df):
         if not was_cached:
             api_calls += 1
             time.sleep(RATE_LIMIT_SEC)
+    logger.info("Holiday fetch done: pairs={}, api_calls={}, errors={}", len(pairs), api_calls, errors)
     return holiday_dict
 
 
@@ -216,6 +224,7 @@ def save_merged_dataset(df: pd.DataFrame, output_path: str):
     if "arrival_date" in df.columns:
         df["arrival_date"] = df["arrival_date"].dt.strftime("%Y-%m-%d")
     df.to_csv(output_path, index=False)
+    logger.info("Saved merged dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], output_path)
 
 
 def fill_new_df(df, holiday_dict):
@@ -242,6 +251,7 @@ def fill_new_df(df, holiday_dict):
     df["is_holiday"] = df["is_holiday"].astype("Int64")
     df["days_to_next_holiday"] = df["days_to_next_holiday"].astype("Int64")
     df["days_from_last_holiday"] = df["days_from_last_holiday"].astype("Int64")
+    logger.info("Holiday features added: rows={}", len(df))
     return df
 
 

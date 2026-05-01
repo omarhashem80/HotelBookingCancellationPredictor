@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import pandas as pd
+from loguru import logger
 
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
@@ -16,7 +17,7 @@ from src.models.baseline import get_baseline_estimator
 from src.models.catboost import catboost_param_grid, get_catboost_estimator
 from src.models.histboost import get_histboost_estimator, histboost_param_grid
 from src.models.logistic import get_logistic_estimator, logistic_param_grid
-from src.models.random_forest import get_ada_boost_estimator, ada_boost_param_grid
+from src.models.adaboost import get_ada_boost_estimator, ada_boost_param_grid
 from src.models.xgboost import get_xgboost_estimator, xgboost_param_grid
 
 
@@ -82,6 +83,8 @@ def run_model_pipeline(
         error_score="raise",
     )
 
+    logger.info("Fitting model pipeline with params={}", list(param_grid.keys()))
+
     search.fit(X_train, y_train)
 
     best_model = search.best_estimator_
@@ -94,6 +97,12 @@ def run_model_pipeline(
     )
 
     metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
+
+    logger.info(
+        "Model pipeline complete: best_score={:.4f}, f1={:.4f}",
+        search.best_score_,
+        metrics.get("f1", 0.0),
+    )
 
     return search.best_score_, best_model, metrics, list(y_pred)
 
@@ -113,6 +122,8 @@ def train_single_model(
     if model_name not in registry:
         raise ValueError(f"Unknown model: {model_name}")
 
+    logger.info("Training single model: {}", model_name)
+
     X, y = split_features_target(df, target_col)
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -120,6 +131,12 @@ def train_single_model(
         test_size=test_size,
         stratify=y,
         random_state=random_state
+    )
+    logger.info(
+        "Train/test split: train_rows={}, test_rows={}, test_size={}",
+        X_train.shape[0],
+        X_test.shape[0],
+        test_size,
     )
 
     model, param_grid = registry[model_name]

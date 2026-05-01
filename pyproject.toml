@@ -24,6 +24,8 @@ tqdm = "^4.67.3"
 pycountry = "^26.2.16"
 great-expectations = "^1.17.0"
 kaleido = "0.2.1"
+loguru = "^0.7.2"
+tomli = "^2.4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

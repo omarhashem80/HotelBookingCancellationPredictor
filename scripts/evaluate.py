@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from loguru import logger
 
 from src.config.logging import configure_logging
 from src.config.settings import get_settings
@@ -45,6 +46,7 @@ def main() -> None:
         )
 
     df = load_csv(data_path)
+    logger.info("Loaded processed data: rows={}, cols={}", df.shape[0], df.shape[1])
     X = df.drop(columns=[settings.target_column])
     y = df[settings.target_column]
     _, X_test, _, y_test = train_test_split(
@@ -106,7 +108,7 @@ def main() -> None:
         json.dumps(safe_output, indent=2, default=str),
         encoding="utf-8",
     )
-    print("Saved evaluation report to reports/evaluation_report.json")
+    logger.info("Saved evaluation report to reports/evaluation_report.json")
 
 
 if __name__ == "__main__":

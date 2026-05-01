@@ -1,4 +1,5 @@
 import pandas as pd
+from loguru import logger
 
 CATEGORICAL_COLS = [
     "hotel",
@@ -99,14 +100,18 @@ def fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     cols_to_check = ["adults", "children", "babies"]
     cleaned = df.copy()
+    original_rows = len(cleaned)
     cleaned = cleaned.drop_duplicates().reset_index(drop=True)
+    logger.info("Dropped duplicates: {} -> {} rows", original_rows, len(cleaned))
     for col, k in (("agent", 10), ("country", 5)):
         if col in df.columns:
             cleaned = reduce_cardinality(cleaned, col, k)
+            logger.info("Reduced cardinality for {} to top_k={}", col, k)
     cleaned = fill_missing_values(cleaned)
     cleaned = clean_dtypes(cleaned)
     columns_exist = all([_ in df.columns.tolist() for _ in cols_to_check])
     if columns_exist:
+        before = len(cleaned)
         cleaned = cleaned[
             ~(
                 (cleaned["adults"] == 0)
@@ -114,4 +119,5 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
                 & (cleaned["babies"] == 0)
             )
         ]  # drop rows where no guests.
+        logger.info("Removed no-guest rows: {} -> {} rows", before, len(cleaned))
     return cleaned.reset_index(drop=True)

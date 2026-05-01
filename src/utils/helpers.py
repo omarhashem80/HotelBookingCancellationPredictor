@@ -5,6 +5,7 @@ from typing import Iterator
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 
 
 def set_seed(seed: int) -> None:
@@ -31,4 +32,4 @@ def timer(label: str) -> Iterator[None]:
         yield
     finally:
         elapsed = time.perf_counter() - start
-        print(f"{label} took {elapsed:.2f}s")
+        logger.info("{} took {:.2f}s", label, elapsed)

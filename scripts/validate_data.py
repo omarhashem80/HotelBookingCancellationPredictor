@@ -1,11 +1,14 @@
 from src.data.gx_validation import build_report, _build_suite
 from src.utils.io import read_config
+from src.config.logging import configure_logging
 
 import great_expectations as gx
 import pandas as pd
+from loguru import logger
 
 
 def run_hotel_validation(df: pd.DataFrame, report_path: str):
+    logger.info("Running data validation. rows={}, cols={}", df.shape[0], df.shape[1])
     context = gx.get_context(mode="ephemeral")
 
     data_source = context.data_sources.add_pandas(name="hotel_source")
@@ -26,17 +29,20 @@ def run_hotel_validation(df: pd.DataFrame, report_path: str):
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_text)
 
+    logger.info("Saved validation report to {}", report_path)
+
     context.build_data_docs()
     context.open_data_docs()
     return results
 
 
 if __name__ == "__main__":
+    configure_logging()
     cfg = read_config()
     report_path = cfg["validation"]["report_path"]
     df = pd.read_csv(
         cfg['data']['merged_data_path'],
         parse_dates=["reservation_status_date"],
     )
-    print("{} rows, {} columns\n".format(df.shape[0], df.shape[1]))
+    logger.info("Loaded merged data: rows={}, cols={}", df.shape[0], df.shape[1])
     run_hotel_validation(df, report_path)

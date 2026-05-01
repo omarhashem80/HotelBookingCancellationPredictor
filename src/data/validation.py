@@ -1,6 +1,7 @@
 from typing import Any
 
 import pandas as pd
+from loguru import logger
 
 
 def _outlier_summary(df: pd.DataFrame) -> dict[str, int]:
@@ -36,4 +37,11 @@ def validate_dataframe(
         ),
         "outlier_summary": _outlier_summary(df),
     }
+    logger.info(
+        "Validation complete: duplicates={}, schema_issues={}, rows={}, cols={}",
+        result["duplicates"],
+        len(schema_issues),
+        df.shape[0],
+        df.shape[1],
+    )
     return result

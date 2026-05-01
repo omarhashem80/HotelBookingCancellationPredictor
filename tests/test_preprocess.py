@@ -1,43 +1,94 @@
-# import pandas as pd
-#
-# from src.data.cleaning import clean_dtypes
-# from src.data.preprocess import build_preprocessor, split_features_target
-#
-#
-# def _make_preprocess_df() -> pd.DataFrame:
-#     return pd.DataFrame(
-#         {
-#             "lead_time": [10, 40, 15],
-#             "adr": [80.0, 120.0, 95.0],
-#             "hotel": ["resort hotel", "city hotel", "resort hotel"],
-#             "reserved_room_type": ["A", "B", "A"],
-#             "assigned_room_type": ["A", "B", "B"],
-#             "arrival_date": ["2015-07-01", "2015-07-02", "2015-07-03"],
-#             "reservation_status_date": [
-#                 "2015-07-02",
-#                 "2015-07-03",
-#                 "2015-07-04",
-#             ],
-#             "is_canceled": [0, 1, 0],
-#         }
-#     )
-#
-#
-# def test_split_features_target_separates_target() -> None:
-#     df = _make_preprocess_df()
-#     X, y = split_features_target(df)
-#     assert "is_canceled" not in X.columns
-#     assert y.name == "is_canceled"
-#     assert len(X) == len(y)
-#
-#
-# def test_build_preprocessor_fit_transform_shape() -> None:
-#     df = clean_dtypes(_make_preprocess_df())
-#     X, _ = split_features_target(df)
-#     preprocessor = build_preprocessor(X)
-#     transformed = preprocessor.fit_transform(X)
-#     transformer_names = [name for name, _, _ in preprocessor.transformers]
-#
-#     assert transformed.shape[0] == len(X)
-#     assert transformed.shape[1] > 0
-#     assert set(["num", "cat", "month"]).issubset(transformer_names)
+import pytest
+import pandas as pd
+
+from src.data.preprocess import (
+    split_features_target,
+    cols_grouped_by_type,
+    build_preprocessor,
+)
+
+
+
+@pytest.fixture
+def toy_df():
+    return pd.DataFrame({
+        "num1": [1, 2, 3, 4],
+        "num2": [10.0, 20.0, 30.0, 40.0],
+        "cat1": ["a", "b", "a", "c"],
+        "date1": pd.to_datetime([
+            "2024-01-01",
+            "2024-02-01",
+            "2024-03-01",
+            "2024-04-01"
+        ]),
+        "is_canceled": [0, 1, 0, 1],
+    })
+
+
+def test_split_features_target(toy_df):
+    X, y = split_features_target(toy_df)
+
+    assert "is_canceled" not in X.columns
+    assert len(X) == len(y)
+    assert y.name == "is_canceled"
+
+
+
+def test_split_missing_target_raises():
+    df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    with pytest.raises(KeyError):
+        split_features_target(df, target_col="is_canceled")
+
+
+
+def test_cols_grouping(toy_df):
+    num, cat, date = cols_grouped_by_type(toy_df)
+
+    assert "num1" in num
+    assert "num2" in num
+
+    assert "cat1" in cat
+    assert "date1" in date
+
+    assert isinstance(num, list)
+    assert isinstance(cat, list)
+    assert isinstance(date, list)
+
+
+
+def test_build_preprocessor_structure(toy_df):
+    X = toy_df.drop(columns=["is_canceled"])
+
+    preprocessor = build_preprocessor(X)
+
+    assert preprocessor is not None
+    assert hasattr(preprocessor, "transformers")
+
+    transformer_names = [t[0] for t in preprocessor.transformers]
+
+    assert "num" in transformer_names
+    assert "cat" in transformer_names
+    assert "month" in transformer_names
+
+
+
+def test_preprocessor_fit_transform(toy_df):
+    X = toy_df.drop(columns=["is_canceled"])
+
+    preprocessor = build_preprocessor(X)
+
+    Xt = preprocessor.fit_transform(X)
+
+    assert Xt is not None
+    assert Xt.shape[0] == len(X)
+
+
+
+def test_empty_dataframe():
+    df = pd.DataFrame({"is_canceled": [0, 1]})
+
+    X, y = split_features_target(df)
+
+    assert X.empty
+    assert len(y) == 2

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import mlflow
 from mlflow.tracking import MlflowClient
+from loguru import logger
 
 _WINDOWS_DRIVE_URI_RE = re.compile(r"^file:/+([A-Za-z]):/")
 
@@ -46,5 +47,7 @@ def setup_mlflow(
 ) -> None:
     """Configure MLflow tracking destination and experiment."""
     mlflow.set_tracking_uri(_normalize_tracking_uri(tracking_uri))
+    logger.info("Configured MLflow tracking URI: {}", mlflow.get_tracking_uri())
     _repair_experiment_if_needed(experiment_name)
     mlflow.set_experiment(experiment_name)
+    logger.info("Using MLflow experiment: {}", experiment_name)

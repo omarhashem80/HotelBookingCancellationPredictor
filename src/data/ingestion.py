@@ -1,16 +1,21 @@
 from pathlib import Path
 
 import pandas as pd
+from loguru import logger
 
 
 def load_primary_dataset(path: str | Path) -> pd.DataFrame:
     """Load the main hotel bookings dataset."""
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+    logger.info("Loaded primary dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], path)
+    return df
 
 
 def load_secondary_dataset(path: str | Path) -> pd.DataFrame:
     """Load an optional secondary dataset for enrichment."""
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+    logger.info("Loaded secondary dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], path)
+    return df
 
 
 def merge_datasets(
@@ -20,7 +25,9 @@ def merge_datasets(
     how: str = "left",
 ) -> pd.DataFrame:
     """Merge primary and secondary sources."""
-    return primary_df.merge(secondary_df, on=on, how=how)
+    merged = primary_df.merge(secondary_df, on=on, how=how)
+    logger.info("Merged datasets: rows={}, cols={}, how={}", merged.shape[0], merged.shape[1], how)
+    return merged
 
 
 def load_and_merge(
@@ -41,4 +48,5 @@ def load_and_merge(
         if not common_cols:
             raise ValueError("No common columns found for dataset merge.")
         merge_on = common_cols[0]
+    logger.info("Merging datasets on column={}", merge_on)
     return merge_datasets(primary_df, secondary_df, on=merge_on)
