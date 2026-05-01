@@ -37,7 +37,7 @@ def main() -> None:
     settings = get_settings()
     root = settings.project_root
 
-    data_path = root / "data/processed/hotel_bookings_processed.csv"
+    data_path = root / "data/processed/hotel_bookings.csv"
     model_path = root / "reports/best_model.pkl"
 
     if not data_path.exists() or not model_path.exists():

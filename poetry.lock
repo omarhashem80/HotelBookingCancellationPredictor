@@ -1418,11 +1418,15 @@ jsonschema = ">=2.5.1"
 marshmallow = ">=3.7.1,<4.0.0"
 mistune = ">=0.8.4"
 numpy = [
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=2.1.0", markers = "python_version >= \"3.13\""},
+    {version = ">=1.26.0", markers = "python_version == \"3.12\""},
     {version = ">=1.22.4", markers = "python_version >= \"3.10\" and python_version < \"3.12\""},
 ]
 packaging = "*"
-pandas = {version = ">=1.3.0", markers = "python_version >= \"3.10\""}
+pandas = [
+    {version = ">=2.2.3", markers = "python_version >= \"3.13\""},
+    {version = ">=1.3.0", markers = "python_version >= \"3.10\""},
+]
 pydantic = ">=1.10.7"
 pyparsing = ">=2.4,<3.2.4 || >3.2.4"
 python-dateutil = ">=2.8.1"
@@ -1830,7 +1834,7 @@ description = "IPython: Productive Interactive Computing"
 optional = false
 python-versions = ">=3.12"
 groups = ["main"]
-markers = "python_version == \"3.12\""
+markers = "python_version >= \"3.12\""
 files = [
     {file = "ipython-9.12.0-py3-none-any.whl", hash = "sha256:0f2701e8ee86e117e37f50563205d36feaa259d2e08d4a6bc6b6d74b18ce128d"},
     {file = "ipython-9.12.0.tar.gz", hash = "sha256:01daa83f504b693ba523b5a407246cabde4eb4513285a3c6acaff11a66735ee4"},
@@ -5557,5 +5561,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10,<3.13"
-content-hash = "244607487f252d7739791e339ee5993b745920938b3a9f95fbd451526efa768a"
+python-versions = ">=3.10,<3.14"
+content-hash = "172a873add8dff7799c8897a51d890b685eb4a14f64038c317b8dfc0900c9807"

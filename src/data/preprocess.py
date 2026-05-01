@@ -49,7 +49,7 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
 
     month_pipeline = Pipeline(
         steps=[
-            ("month", FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False)),
+            # ("month", FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False)),
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )

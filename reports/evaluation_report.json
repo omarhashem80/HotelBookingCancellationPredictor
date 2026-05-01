@@ -1,62 +1,61 @@
 {
   "standard_metrics": {
-    "accuracy": 1.0,
-    "precision": 1.0,
-    "recall": 1.0,
-    "f1": 1.0,
-    "roc_auc": 1.0
+    "accuracy": 0.9977633767276481,
+    "precision": 0.9989522212908634,
+    "recall": 0.9929181420537389,
+    "f1": 0.9959260419931056,
+    "roc_auc": 0.9999664883311808
   },
   "business_metrics": {
-    "false_negative_rate": 0.0,
-    "cost_sensitive_score": -0.0,
-    "revenue_loss_estimate": 0.0
+    "false_negative_rate": 0.007081857946261196,
+    "cost_sensitive_score": -175.0
   },
   "classification_report": {
     "0": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1-score": 1.0,
-      "support": 12644.0
+      "precision": 0.9973154362416108,
+      "recall": 0.9996043051598608,
+      "f1-score": 0.9984585589502392,
+      "support": 12636.0
     },
     "1": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1-score": 1.0,
-      "support": 4802.0
+      "precision": 0.9989522212908634,
+      "recall": 0.9929181420537389,
+      "f1-score": 0.9959260419931056,
+      "support": 4801.0
     },
-    "accuracy": 1.0,
+    "accuracy": 0.9977633767276481,
     "macro avg": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1-score": 1.0,
-      "support": 17446.0
+      "precision": 0.9981338287662371,
+      "recall": 0.9962612236067998,
+      "f1-score": 0.9971923004716724,
+      "support": 17437.0
     },
     "weighted avg": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1-score": 1.0,
-      "support": 17446.0
+      "precision": 0.9977660989141726,
+      "recall": 0.9977633767276481,
+      "f1-score": 0.9977612707750256,
+      "support": 17437.0
     }
   },
   "error_analysis": {
     "confusion_breakdown": {
-      "tn": 12644,
-      "fp": 0,
-      "fn": 0,
-      "tp": 4802
+      "tn": 12631,
+      "fp": 5,
+      "fn": 34,
+      "tp": 4767
     },
     "segment_error_analysis": {
       "lead_time": {
-        "short": 0.0,
-        "medium": 0.0,
-        "long": 0.0,
-        "very_long": 0.0
+        "short": 0.00291970802919708,
+        "medium": 0.0015466195315952276,
+        "long": 0.0010825439783491205,
+        "very_long": 0.0033812341504649195
       },
       "adr": {
-        "(-0.001, 71.535]": 0.0,
-        "(71.535, 97.795]": 0.0,
-        "(97.795, 133.74]": 0.0,
-        "(133.74, 451.5]": 0.0
+        "(-0.001, 72.0]": 0.0027434842249657062,
+        "(72.0, 98.0]": 0.0006832156684126623,
+        "(98.0, 134.0]": 0.002528735632183908,
+        "(134.0, 510.0]": 0.003007866728366497
       }
     }
   }
