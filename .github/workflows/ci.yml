@@ -33,4 +33,4 @@ jobs:
         run: poetry run pytest -q
 
       - name: Training Smoke Test
-        run: poetry run python scripts/train.py --models baseline,logistic --fast
+        run: poetry run python scripts/train.py --models baseline,logistic
