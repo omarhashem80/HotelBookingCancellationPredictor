@@ -195,7 +195,6 @@ def plot_time_series_canceled(df: pd.DataFrame, date_col: str, year: str, base_p
 
 
 def plot_all_days_trend_vs_canceled(df: pd.DataFrame, date_col: str, base_path: Path):
-    plot_name = f"{date_col}_days_trend_vs_canceled"
     dff = df.copy()
     dff["day_of_year"] = dff[date_col].dt.dayofyear
 
@@ -207,12 +206,9 @@ def plot_all_days_trend_vs_canceled(df: pd.DataFrame, date_col: str, base_path: 
     )
     dff["status"] = dff["is_canceled"].map({0: "Not Canceled", 1: "Canceled"})
 
-    fig = px.line(dff, x="day_of_year", y="count", color="status")
-    save_path = base_path / f"{plot_name}.jpg"
-
 
 def correlation_matrix(df: pd.DataFrame, numerical_cols: list, base_path: Path):
-    plot_name = f"correlation_matrix_for_numerical_features"
+    plot_name = "correlation_matrix_for_numerical_features"
     fig = px.imshow(
         df[numerical_cols].corr(numeric_only=True, method="spearman"),
         text_auto=".2f",

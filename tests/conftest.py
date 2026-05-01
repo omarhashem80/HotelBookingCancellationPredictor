@@ -10,9 +10,7 @@ def toy_dataset(request) -> pd.DataFrame:
         {
             "lead_time": rng.integers(1, 200, size=request.param),
             "adr": rng.normal(100, 20, size=request.param),
-            "hotel": rng.choice(
-                ["resort hotel", "city hotel"], size=request.param
-            ),
+            "hotel": rng.choice(["resort hotel", "city hotel"], size=request.param),
             "adults": rng.integers(1, 3, size=request.param),
             "children": rng.integers(0, 2, size=request.param),
             "babies": 0,

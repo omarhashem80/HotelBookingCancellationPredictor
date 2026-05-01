@@ -42,9 +42,7 @@ def _repair_experiment_if_needed(experiment_name: str) -> None:
     client.create_experiment(experiment_name)
 
 
-def setup_mlflow(
-    tracking_uri: str, experiment_name: str = "hotel-cancellation"
-) -> None:
+def setup_mlflow(tracking_uri: str, experiment_name: str = "hotel-cancellation") -> None:
     """Configure MLflow tracking destination and experiment."""
     mlflow.set_tracking_uri(_normalize_tracking_uri(tracking_uri))
     logger.info("Configured MLflow tracking URI: {}", mlflow.get_tracking_uri())

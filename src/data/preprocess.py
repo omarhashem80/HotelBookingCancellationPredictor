@@ -13,14 +13,18 @@ def split_features_target(
 ) -> Tuple[pd.DataFrame, pd.Series]:
     X = df.drop(columns=[target_col])
     y = df[target_col]
-    logger.debug("Split features/target: rows={}, features={}, target={}", len(df), X.shape[1], target_col)
+    logger.debug(
+        "Split features/target: rows={}, features={}, target={}", len(df), X.shape[1], target_col
+    )
     return X, y
 
 
 def cols_grouped_by_type(df: pd.DataFrame) -> tuple[list, list, list]:
     numerical_cols = df.select_dtypes(include=["number"]).columns.tolist()
     categorical_cols = df.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
-    date_cols = df.select_dtypes(include=["datetime", "datetime64[ns]", "datetime64[ns, UTC]"]).columns.tolist()
+    date_cols = df.select_dtypes(
+        include=["datetime", "datetime64[ns]", "datetime64[ns, UTC]"]
+    ).columns.tolist()
     logger.debug(
         "Grouped columns: numerical={}, categorical={}, datetime={}",
         len(numerical_cols),
@@ -49,7 +53,10 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
 
     month_pipeline = Pipeline(
         steps=[
-            ("month", FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False)),
+            (
+                "month",
+                FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False),
+            ),
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )

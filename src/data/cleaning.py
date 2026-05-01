@@ -67,13 +67,9 @@ def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def reduce_cardinality(
-    df: pd.DataFrame, col_name: str, top_k: int = 5
-) -> pd.DataFrame:
+def reduce_cardinality(df: pd.DataFrame, col_name: str, top_k: int = 5) -> pd.DataFrame:
     top_k_categories = df[col_name].value_counts().head(top_k).index
-    df[col_name] = df[col_name].apply(
-        lambda x: x if x in top_k_categories else "Other"
-    )
+    df[col_name] = df[col_name].apply(lambda x: x if x in top_k_categories else "Other")
     return df
 
 
@@ -113,11 +109,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     if columns_exist:
         before = len(cleaned)
         cleaned = cleaned[
-            ~(
-                (cleaned["adults"] == 0)
-                & (cleaned["children"] == 0)
-                & (cleaned["babies"] == 0)
-            )
+            ~((cleaned["adults"] == 0) & (cleaned["children"] == 0) & (cleaned["babies"] == 0))
         ]  # drop rows where no guests.
         logger.info("Removed no-guest rows: {} -> {} rows", before, len(cleaned))
     return cleaned.reset_index(drop=True)

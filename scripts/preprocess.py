@@ -24,9 +24,7 @@ def run_preprocess() -> Path:
     validation_report = validate_dataframe(df, target_col="is_canceled")
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
-        json.dumps(validation_report, indent=2), encoding="utf-8"
-    )
+    report_path.write_text(json.dumps(validation_report, indent=2), encoding="utf-8")
     logger.info("Saved validation report to {}", report_path)
 
     cleaned = clean_data(df)

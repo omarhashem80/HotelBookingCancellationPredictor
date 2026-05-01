@@ -37,9 +37,7 @@ def plot_roc(y_true, y_prob, output_dir: str | Path) -> Path:
     return path
 
 
-def plot_feature_importance(
-    feature_names, importances, output_dir: str | Path
-) -> Path:
+def plot_feature_importance(feature_names, importances, output_dir: str | Path) -> Path:
     output = Path(output_dir)
     _ensure_dir(output)
     feature_names = np.array(feature_names)

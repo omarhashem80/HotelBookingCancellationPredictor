@@ -8,21 +8,17 @@ from src.data.preprocess import (
 )
 
 
-
 @pytest.fixture
 def toy_df():
-    return pd.DataFrame({
-        "num1": [1, 2, 3, 4],
-        "num2": [10.0, 20.0, 30.0, 40.0],
-        "cat1": ["a", "b", "a", "c"],
-        "date1": pd.to_datetime([
-            "2024-01-01",
-            "2024-02-01",
-            "2024-03-01",
-            "2024-04-01"
-        ]),
-        "is_canceled": [0, 1, 0, 1],
-    })
+    return pd.DataFrame(
+        {
+            "num1": [1, 2, 3, 4],
+            "num2": [10.0, 20.0, 30.0, 40.0],
+            "cat1": ["a", "b", "a", "c"],
+            "date1": pd.to_datetime(["2024-01-01", "2024-02-01", "2024-03-01", "2024-04-01"]),
+            "is_canceled": [0, 1, 0, 1],
+        }
+    )
 
 
 def test_split_features_target(toy_df):
@@ -33,13 +29,11 @@ def test_split_features_target(toy_df):
     assert y.name == "is_canceled"
 
 
-
 def test_split_missing_target_raises():
     df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
 
     with pytest.raises(KeyError):
         split_features_target(df, target_col="is_canceled")
-
 
 
 def test_cols_grouping(toy_df):
@@ -54,7 +48,6 @@ def test_cols_grouping(toy_df):
     assert isinstance(num, list)
     assert isinstance(cat, list)
     assert isinstance(date, list)
-
 
 
 def test_build_preprocessor_structure(toy_df):
@@ -72,7 +65,6 @@ def test_build_preprocessor_structure(toy_df):
     assert "month" in transformer_names
 
 
-
 def test_preprocessor_fit_transform(toy_df):
     X = toy_df.drop(columns=["is_canceled"])
 
@@ -82,7 +74,6 @@ def test_preprocessor_fit_transform(toy_df):
 
     assert Xt is not None
     assert Xt.shape[0] == len(X)
-
 
 
 def test_empty_dataframe():

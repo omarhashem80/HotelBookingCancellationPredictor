@@ -14,7 +14,9 @@ def load_primary_dataset(path: str | Path) -> pd.DataFrame:
 def load_secondary_dataset(path: str | Path) -> pd.DataFrame:
     """Load an optional secondary dataset for enrichment."""
     df = pd.read_csv(path)
-    logger.info("Loaded secondary dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], path)
+    logger.info(
+        "Loaded secondary dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], path
+    )
     return df
 
 
@@ -42,9 +44,7 @@ def load_and_merge(
 
     secondary_df = load_secondary_dataset(secondary_path)
     if merge_on is None:
-        common_cols = sorted(
-            set(primary_df.columns).intersection(secondary_df.columns)
-        )
+        common_cols = sorted(set(primary_df.columns).intersection(secondary_df.columns))
         if not common_cols:
             raise ValueError("No common columns found for dataset merge.")
         merge_on = common_cols[0]

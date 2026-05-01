@@ -7,9 +7,11 @@ Production-style supervised ML pipeline for predicting hotel booking cancellatio
 Business problem: hotels lose revenue when likely cancellations are not identified early enough. This project predicts `is_canceled` from booking attributes and holiday-related context.
 
 Primary dataset:
+
 - `data/raw/hotel_bookings_with_holidays.csv`
 
 Secondary source support:
+
 - `src/data/ingestion.py` supports optional second dataset merge by key(s).
 
 ## Quick Start
@@ -94,6 +96,7 @@ project/
 ## Modeling Coverage
 
 Implemented models:
+
 - Baseline (`DummyClassifier`)
 - Logistic Regression
 - Random Forest
@@ -103,15 +106,21 @@ Implemented models:
 ## Expected Outputs
 
 After `make train`:
+
 - `reports/best_model.pkl`
 - `reports/best_model_metrics.json`
 - `reports/model_results.csv`
 - MLflow runs under `mlruns/`
 
 After `make evaluate`:
+
 - `reports/evaluation_report.json`
 - `reports/figures/confusion_matrix.png`
 - `reports/figures/roc_curve.png` (if probabilities available)
+
+## CI/CD Pipeline
+
+Continuous Integration and automated testing is handled natively via [GitHub Actions](.github/workflows/ci.yml).
 
 ## Team Contributions
 

@@ -6,6 +6,4 @@ def get_logistic_estimator(random_state: int = 42) -> LogisticRegression:
 
 
 def logistic_param_grid() -> dict:
-    return {
-        'C': [0.01, 0.1, 1, 10]
-    }
+    return {"C": [0.01, 0.1, 1, 10]}

@@ -11,8 +11,8 @@ from loguru import logger
 
 def merge_data():
     cfg = read_config()
-    input_file = cfg['data']['raw_data_path']
-    output_file = cfg['data']['merged_data_path']
+    input_file = cfg["data"]["raw_data_path"]
+    output_file = cfg["data"]["merged_data_path"]
     logger.info("Loading raw data from {}", input_file)
     df = load_and_prepare(input_file)
     logger.info("Loaded data: rows={}, cols={}", df.shape[0], df.shape[1])

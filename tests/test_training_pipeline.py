@@ -13,11 +13,13 @@ from src.models.trainer import (
 def toy_dataset():
     np.random.seed(42)
 
-    df = pd.DataFrame({
-        "feature1": np.random.randn(50),
-        "feature2": np.random.randn(50),
-        "is_canceled": np.random.randint(0, 2, 50)
-    })
+    df = pd.DataFrame(
+        {
+            "feature1": np.random.randn(50),
+            "feature2": np.random.randn(50),
+            "is_canceled": np.random.randint(0, 2, 50),
+        }
+    )
 
     return df
 
@@ -39,7 +41,6 @@ def test_predictions_match_test_set_size(toy_dataset):
 
     assert len(result.predictions) == len(result.y_true)
     assert len(result.X_test) == len(result.y_true)
-
 
 
 def test_pipeline_contains_model(toy_dataset):
@@ -66,7 +67,6 @@ def test_metrics_are_valid(toy_dataset):
 def test_unknown_model_raises_error(toy_dataset):
     with pytest.raises(ValueError, match="Unknown model"):
         train_single_model(toy_dataset, model_name="invalid_model")
-
 
 
 def test_run_model_pipeline_direct(toy_dataset):

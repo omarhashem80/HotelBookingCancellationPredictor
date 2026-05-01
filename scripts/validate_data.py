@@ -18,9 +18,7 @@ def run_hotel_validation(df: pd.DataFrame, report_path: str):
     suite = _build_suite(context)
 
     validation_def = context.validation_definitions.add(
-        gx.ValidationDefinition(
-            name="hotel_validation", data=batch_def, suite=suite
-        )
+        gx.ValidationDefinition(name="hotel_validation", data=batch_def, suite=suite)
     )
 
     results = validation_def.run(batch_parameters={"dataframe": df})
@@ -41,7 +39,7 @@ if __name__ == "__main__":
     cfg = read_config()
     report_path = cfg["validation"]["report_path"]
     df = pd.read_csv(
-        cfg['data']['merged_data_path'],
+        cfg["data"]["merged_data_path"],
         parse_dates=["reservation_status_date"],
     )
     logger.info("Loaded merged data: rows={}, cols={}", df.shape[0], df.shape[1])

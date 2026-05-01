@@ -6,7 +6,6 @@ from loguru import logger
 
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import classification_report
 
 from imblearn.pipeline import Pipeline as ImbPipeline
 
@@ -92,9 +91,7 @@ def run_model_pipeline(
 
     y_pred = best_model.predict(X_test)
     y_prob = (
-        best_model.predict_proba(X_test)[:, 1]
-        if hasattr(best_model, "predict_proba")
-        else None
+        best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
     )
 
     metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
@@ -129,10 +126,7 @@ def train_single_model(
     X, y = split_features_target(df, target_col)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=test_size,
-        stratify=y,
-        random_state=random_state
+        X, y, test_size=test_size, stratify=y, random_state=random_state
     )
     logger.info(
         "Train/test split: train_rows={}, test_rows={}, test_size={}",

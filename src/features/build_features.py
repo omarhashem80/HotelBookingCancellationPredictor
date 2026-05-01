@@ -48,9 +48,7 @@ def add_datetime_features(df: pd.DataFrame) -> pd.DataFrame:
     if "reservation_status_date" not in df.columns.tolist():
         return df
     logger.info("Adding datetime features")
-    df["reservation_status_date"] = pd.to_datetime(
-        df["reservation_status_date"]
-    )
+    df["reservation_status_date"] = pd.to_datetime(df["reservation_status_date"])
     df["reservation_status_year"] = df["reservation_status_date"].dt.year
     df["reservation_status_month"] = df["reservation_status_date"].dt.month
     df["reservation_status_day"] = df["reservation_status_date"].dt.day

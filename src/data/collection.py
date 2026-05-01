@@ -166,11 +166,7 @@ def fetch_holidays(country_a2, year):
         return []
     # parse dates
     holiday_dates = sorted(
-        {
-            d
-            for h in holidays_raw
-            if isinstance(h, dict) and (d := _parse_date(h)) is not None
-        }
+        {d for h in holidays_raw if isinstance(h, dict) and (d := _parse_date(h)) is not None}
     )
     _write_cache(cache, holiday_dates)
     return holiday_dates
@@ -185,9 +181,7 @@ def _cache_path(country_a2, year):
 
 def fetch_all_holidays(df):
     pairs = set()
-    for _, row in df.dropna(
-        subset=["country_alpha2", "arrival_date"]
-    ).iterrows():
+    for _, row in df.dropna(subset=["country_alpha2", "arrival_date"]).iterrows():
         a2 = row["country_alpha2"]
         year = int(row["arrival_date"].year)
         pairs.add((a2, year))
@@ -213,7 +207,9 @@ def fetch_all_holidays(df):
         if not was_cached:
             api_calls += 1
             time.sleep(RATE_LIMIT_SEC)
-    logger.info("Holiday fetch done: pairs={}, api_calls={}, errors={}", len(pairs), api_calls, errors)
+    logger.info(
+        "Holiday fetch done: pairs={}, api_calls={}, errors={}", len(pairs), api_calls, errors
+    )
     return holiday_dict
 
 
@@ -224,7 +220,9 @@ def save_merged_dataset(df: pd.DataFrame, output_path: str):
     if "arrival_date" in df.columns:
         df["arrival_date"] = df["arrival_date"].dt.strftime("%Y-%m-%d")
     df.to_csv(output_path, index=False)
-    logger.info("Saved merged dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], output_path)
+    logger.info(
+        "Saved merged dataset: rows={}, cols={}, path={}", df.shape[0], df.shape[1], output_path
+    )
 
 
 def fill_new_df(df, holiday_dict):
@@ -234,17 +232,11 @@ def fill_new_df(df, holiday_dict):
     for idx, row in iterator:
         arrival = row["arrival_date"]
         a2 = row["country_alpha2"]
-        year = (
-            int(row["arrival_date_year"])
-            if pd.notna(row["arrival_date_year"])
-            else None
-        )
+        year = int(row["arrival_date_year"]) if pd.notna(row["arrival_date_year"]) else None
         if pd.isna(arrival) or a2 is None or year is None:
             results.append((np.nan, np.nan, np.nan))
         else:
-            results.append(
-                calc_holiday_features(arrival, a2, holiday_dict, year)
-            )
+            results.append(calc_holiday_features(arrival, a2, holiday_dict, year))
     df["is_holiday"] = [r[0] for r in results]
     df["days_to_next_holiday"] = [r[1] for r in results]
     df["days_from_last_holiday"] = [r[2] for r in results]
@@ -264,11 +256,7 @@ def calc_holiday_features(arrival, country_a2, holiday_dict, year):
     if not all_holidays:
         return np.nan, np.nan, np.nan
     all_holidays = sorted(set(all_holidays))
-    arrival_d = (
-        arrival.date()
-        if isinstance(arrival, (datetime, pd.Timestamp))
-        else arrival
-    )
+    arrival_d = arrival.date() if isinstance(arrival, (datetime, pd.Timestamp)) else arrival
     is_hol = 1 if arrival_d in all_holidays else 0
     idx = bisect.bisect_right(all_holidays, arrival_d)
     if idx < len(all_holidays):

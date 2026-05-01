@@ -1,16 +1,17 @@
-name: ci
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["**"]
+    branches: ["master"]
   pull_request:
+    branches: ["master", "dev", "stage"]
 
 jobs:
-  test:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -26,11 +27,11 @@ jobs:
       - name: Install Dependencies
         run: poetry install
 
-#      - name: Lint
-#        run: poetry run flake8 src scripts tests
+      - name: Code Quality - Linting (Flake8)
+        run: poetry run flake8 src scripts tests
 
-      - name: Unit Tests
-        run: poetry run pytest -q
+      - name: Run Unit and Integration Tests with Coverage
+        run: poetry run pytest --cov=src --cov-report=xml tests/
 
-      - name: Training Smoke Test
+      - name: Training Pipeline Smoke Test
         run: poetry run python scripts/train.py --models baseline,logistic

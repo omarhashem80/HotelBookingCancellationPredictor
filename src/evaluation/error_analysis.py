@@ -2,9 +2,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix
 
 
-def confusion_breakdown(
-    y_true: pd.Series, y_pred: pd.Series
-) -> dict[str, int]:
+def confusion_breakdown(y_true: pd.Series, y_pred: pd.Series) -> dict[str, int]:
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)}
 
@@ -28,17 +26,11 @@ def segment_error_analysis(
             labels=["short", "medium", "long", "very_long"],
         )
         analysis["lead_time"] = (
-            local.groupby("lead_time_segment", observed=True)["is_error"]
-            .mean()
-            .to_dict()
+            local.groupby("lead_time_segment", observed=True)["is_error"].mean().to_dict()
         )
 
     if "adr" in local.columns:
         local["adr_segment"] = pd.qcut(local["adr"], q=4, duplicates="drop")
-        analysis["adr"] = (
-            local.groupby("adr_segment", observed=True)["is_error"]
-            .mean()
-            .to_dict()
-        )
+        analysis["adr"] = local.groupby("adr_segment", observed=True)["is_error"].mean().to_dict()
 
     return analysis

@@ -29,9 +29,7 @@ from src.features.selection import get_xgb_feature_selector
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Train cancellation prediction models"
-    )
+    parser = argparse.ArgumentParser(description="Train cancellation prediction models")
 
     parser.add_argument(
         "--models",
@@ -76,16 +74,12 @@ def main() -> None:
     selected_models = [m.strip() for m in args.models.split(",") if m.strip()]
     logger.info("Training models: {}", ", ".join(selected_models))
 
-    sampler: Optional[object] = (
-        get_smote_sampler(settings.random_state) if args.use_smote else None
-    )
+    sampler: Optional[object] = get_smote_sampler(settings.random_state) if args.use_smote else None
     if sampler is not None:
         logger.info("SMOTE oversampling enabled")
 
     selector: Optional[object] = (
-        get_xgb_feature_selector(settings.random_state)
-        if args.use_selector
-        else None
+        get_xgb_feature_selector(settings.random_state) if args.use_selector else None
     )
     if selector is not None:
         logger.info("Feature selection enabled")
