@@ -1,5 +1,6 @@
 """
-EDA plotting functions using matplotlib/seaborn for reliable PNG image generation.
+EDA plotting functions using matplotlib/seaborn for reliable PNG image
+generation.
 This replaces plotly+kaleido which has issues on Windows.
 """
 
@@ -8,10 +9,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib
-
-matplotlib.use('Agg')  # Non-interactive backend for server/script use
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+matplotlib.use('Agg')  # Non-interactive backend for server/script use
 from loguru import logger
 
 from src.utils.io import read_config
@@ -392,9 +393,6 @@ def plot_mean_categorical_by_cancellation(
 
     save_path = base_path / f"{plot_name}.png"
     save_figure(fig, save_path)
-
-    fig = px.line(dff, x="day_of_year", y="count", color="status")
-    save_path = base_path / f"{plot_name}.jpg"
 
 
 def correlation_matrix(

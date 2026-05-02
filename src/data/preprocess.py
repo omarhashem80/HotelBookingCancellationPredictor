@@ -74,6 +74,13 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )
+    transformers = [
+        ("num", numeric_pipeline, numerical_cols),
+        ("cat", categorical_pipeline, categorical_cols),
+    ]
+
+    if date_cols:
+        transformers.append(("month", month_pipeline, date_cols))
     preprocessor = ColumnTransformer(
         transformers=transformers,
         remainder="drop",
