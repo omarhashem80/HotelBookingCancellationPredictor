@@ -75,6 +75,18 @@ jobs:
       - name: Export Model for Deployment
         run: poetry run python scripts/export_model_for_deployment.py
 
+      - name: Verify Deployment Files
+        run: |
+          echo "Checking Hotel-Booking directory..."
+          ls -la Hotel-Booking/
+          echo ""
+          echo "Required files:"
+          test -f Hotel-Booking/README.md && echo " README.md" || echo " README.md MISSING"
+          test -f Hotel-Booking/app.py && echo " app.py" || echo " app.py MISSING"
+          test -f Hotel-Booking/requirements.txt && echo " requirements.txt" || echo " requirements.txt MISSING"
+          test -f Hotel-Booking/best_model.pkl && echo " best_model.pkl" || echo " best_model.pkl MISSING"
+          test -f Hotel-Booking/.gitattributes && echo " .gitattributes" || echo " .gitattributes MISSING"
+
       - name: Setup Git LFS
         run: |
           git lfs install
