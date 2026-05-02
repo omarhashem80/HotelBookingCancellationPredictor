@@ -19,7 +19,6 @@ An AI-powered system that predicts hotel booking cancellations with 99.6% accura
 
 - **High Accuracy Predictions**: 99.8% accuracy, 99.6% F1-score
 - **Risk Assessment**: Detailed probability scores for each booking
-- **Business Recommendations**: Actionable insights to reduce cancellations
 - **Interactive Interface**: User-friendly Gradio web interface
 - **Real-time Analysis**: Instant predictions with risk factor breakdown
 
