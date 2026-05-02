@@ -66,7 +66,7 @@ jobs:
           git checkout -B main
           git add .
           git commit -m "Auto-deploy: $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
-          git push https://user:$HF_TOKEN@huggingface.co/spaces/aelsayed1/Hotel-Booking main --force
+          git push https://aelsayed1:$HF_TOKEN@huggingface.co/spaces/aelsayed1/Hotel-Booking main --force
 
       - name: Deployment Summary
         if: success()
