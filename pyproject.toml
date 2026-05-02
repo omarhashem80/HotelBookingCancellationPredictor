@@ -13,10 +13,10 @@ packages = [
 run-tests = "commands.run_tests:run_tests"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.14"
+python = ">=3.11,<3.14"
 pandas = "^2.2.2"
 numpy = "^2.1.1"
-scikit-learn = "^1.5.2"
+scikit-learn = "1.8.0"
 xgboost = "^2.1.1"
 catboost = "^1.2.7"
 mlflow = "^2.17.2"
@@ -32,6 +32,8 @@ great-expectations = "^1.17.0"
 kaleido = "0.2.1"
 loguru = "^0.7.2"
 tomli = "^2.4.1"
+streamlit = "^1.57.0"
+seaborn = "^0.13.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

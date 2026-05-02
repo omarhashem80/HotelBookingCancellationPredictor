@@ -51,7 +51,7 @@ def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
             df[col] = df[col].astype("category")
     for col in BINARY_COLS:
         if col in df.columns:
-            df[col] = df[col].astype("int8").astype("category")
+            df[col] = df[col].fillna(0).astype("int8").astype("category")
     for col in INT_COLS:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
@@ -74,22 +74,18 @@ def reduce_cardinality(df: pd.DataFrame, col_name: str, top_k: int = 5) -> pd.Da
 
 
 def fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
-    cols_to_fill = [
-        "children",
-        "country",
-        "agent",
-        "is_holiday",
-        "days_to_next_holiday",
-        "days_from_last_holiday",
-    ]
-    if cols_to_fill not in df.columns.tolist():
-        return df
-    df["children"].fillna(0, inplace=True)
-    df["country"].fillna("Unknown", inplace=True)
-    df["agent"].fillna(0, inplace=True)
-    df["is_holiday"].fillna(0, inplace=True)
-    df["days_to_next_holiday"].fillna(-1, inplace=True)
-    df["days_from_last_holiday"].fillna(-1, inplace=True)
+    if "children" in df.columns:
+        df["children"] = df["children"].fillna(0)
+    if "country" in df.columns:
+        df["country"] = df["country"].fillna("Unknown")
+    if "agent" in df.columns:
+        df["agent"] = df["agent"].fillna(0)
+    if "is_holiday" in df.columns:
+        df["is_holiday"] = df["is_holiday"].fillna(0)
+    if "days_to_next_holiday" in df.columns:
+        df["days_to_next_holiday"] = df["days_to_next_holiday"].fillna(-1)
+    if "days_from_last_holiday" in df.columns:
+        df["days_from_last_holiday"] = df["days_from_last_holiday"].fillna(-1)
     return df
 
 
