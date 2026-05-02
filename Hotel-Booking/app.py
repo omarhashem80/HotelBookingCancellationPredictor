@@ -154,15 +154,15 @@ with gr.Blocks(title="Hotel Booking Cancellation Predictor") as demo:
     
     predict_btn.click(
         fn=predict_cancellation,
-        inputs=[hotel, lead_time, arrival_year, arriv
-               agent, company, is_holiday, reservation_status_date,
-              al_month, arrival_day,
+        inputs=[hotel, lead_time, arrival_year, arrival_month, arrival_day,
                weekend_nights, week_nights, adults, children, babies,
                meal, country, market_segment, distribution_channel,
                is_repeated_guest, previous_cancellations, previous_bookings,
                reserved_room, assigned_room, booking_changes,
                deposit_type, days_waiting, customer_type,
-               adr, parking_spaces, special_requests, days_to_holiday, days_from_holiday],
+               adr, parking_spaces, special_requests,
+               agent, company, is_holiday, reservation_status_date,
+               days_to_holiday, days_from_holiday],
         outputs=output
     )
 
