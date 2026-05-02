@@ -20,8 +20,8 @@ def predict_cancellation(
 ):
     """Predict if a hotel booking will be canceled."""
     
-    # Create arrival_date from components
-    arrival_date = datetime(arrival_year, arrival_month, arrival_day)
+    # Create arrival_date from components (ensure integers)
+    arrival_date = datetime(int(arrival_year), int(arrival_month), int(arrival_day))
     
     # Parse reservation status date
     res_date = pd.to_datetime(reservation_status_date)
@@ -51,7 +51,7 @@ def predict_cancellation(
         'booking_changes': [booking_changes],
         'deposit_type': [deposit_type],
         'agent': [str(agent) if agent and str(agent).strip() else "Other"],
-        'company': [float(company) if company and str(company).strip() else np.nan],
+        'company': [float(company) if company is not None and company != "" else np.nan],
         'days_in_waiting_list': [days_waiting],
         'customer_type': [customer_type],
         'adr': [adr],
@@ -142,8 +142,8 @@ with gr.Blocks(title="Hotel Booking Cancellation Predictor") as demo:
             special_requests = gr.Number(label="Special Requests", value=0)
         
         with gr.Column():
-            agent = gr.Textbox(label="Agent ID", value="Other", placeholder="Travel agent ID or 'Other' for direct booking")
-            company = gr.Number(label="Company ID", value=None, placeholder="Company ID (leave empty if none)")
+            agent = gr.Textbox(label="Agent ID", value="Other", placeholder="Travel agent ID or 'Other' for direct")
+            company = gr.Number(label="Company ID (optional)", value=None)
             is_holiday = gr.Radio(["Yes", "No"], label="Is Holiday Period", value="No")
             reservation_status_date = gr.Textbox(label="Reservation Date", value="2024-07-01", placeholder="YYYY-MM-DD")
             days_to_holiday = gr.Number(label="Days to Next Holiday", value=30)
