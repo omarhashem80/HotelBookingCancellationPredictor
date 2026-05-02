@@ -1,0 +1,158 @@
+name: Model Training & Evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: 'Models to train (comma-separated)'
+        required: false
+        default: 'baseline,logistic,xgboost,catboost'
+  schedule:
+    # Run weekly on Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  push:
+    branches: ["main", "master"]
+    paths:
+      - 'src/models/**'
+      - 'src/features/**'
+      - 'scripts/train.py'
+      - 'scripts/evaluate.py'
+
+jobs:
+  train-models:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            .venv
+          key: ${{ runner.os }}-poetry-training-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+
+      - name: Train Models
+        run: |
+          MODELS="${{ github.event.inputs.models || 'baseline,logistic,xgboost' }}"
+          poetry run python scripts/train.py --models $MODELS
+        timeout-minutes: 60
+
+      - name: Evaluate Models
+        run: poetry run python scripts/evaluate.py
+
+      - name: Generate EDA Reports
+        run: poetry run python scripts/generate_eda_reports.py
+        continue-on-error: true
+
+      - name: Upload Model Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-models
+          path: |
+            reports/best_model.pkl
+            reports/model_results.csv
+            reports/evaluation_report.json
+          retention-days: 30
+
+      - name: Upload Evaluation Plots
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-plots
+          path: |
+            reports/figures/
+          retention-days: 30
+
+      - name: Create Model Report
+        run: |
+          echo "# Model Training Report" > model_report.md
+          echo "" >> model_report.md
+          echo "**Date:** $(date)" >> model_report.md
+          echo "" >> model_report.md
+          echo "## Models Trained" >> model_report.md
+          echo "\`\`\`" >> model_report.md
+          cat reports/model_results.csv 2>/dev/null || echo "No results available"
+          echo "\`\`\`" >> model_report.md
+          echo "" >> model_report.md
+          echo "## Best Model Metrics" >> model_report.md
+          echo "\`\`\`json" >> model_report.md
+          cat reports/evaluation_report.json 2>/dev/null | head -20 || echo "No metrics available"
+          echo "\`\`\`" >> model_report.md
+
+      - name: Upload Model Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-report
+          path: model_report.md
+          retention-days: 90
+
+  benchmark-performance:
+    runs-on: ubuntu-latest
+    needs: train-models
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Model Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-models
+          path: reports/
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+
+      - name: Benchmark Model Inference
+        run: |
+          poetry run python -c "
+          import joblib
+          import pandas as pd
+          import time
+          from pathlib import Path
+          
+          model = joblib.load('reports/best_model.pkl')
+          df = pd.read_csv('data/processed/hotel_bookings.csv')
+          X = df.drop('is_canceled', axis=1).head(1000)
+          
+          # Warm up
+          _ = model.predict(X.head(10))
+          
+          # Benchmark
+          start = time.time()
+          predictions = model.predict(X)
+          elapsed = time.time() - start
+          
+          print(f'Predictions: {len(predictions)}')
+          print(f'Time: {elapsed:.4f}s')
+          print(f'Throughput: {len(predictions)/elapsed:.0f} predictions/sec')
+          "

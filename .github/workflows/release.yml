@@ -1,0 +1,143 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+
+      - name: Run Tests
+        run: poetry run pytest tests/ --verbose
+
+      - name: Train Final Model
+        run: poetry run python scripts/train.py --models xgboost
+        timeout-minutes: 30
+
+      - name: Evaluate Model
+        run: poetry run python scripts/evaluate.py
+
+      - name: Export Model for Deployment
+        run: poetry run python scripts/export_model_for_deployment.py
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          cat > RELEASE_NOTES.md << EOF
+          # Release $VERSION
+          
+          ## 🎯 Model Performance
+          
+          $(poetry run python -c "
+          import json
+          try:
+              with open('reports/evaluation_report.json') as f:
+                  data = json.load(f)
+              metrics = data.get('standard_metrics', {})
+              macro = data.get('classification_report', {}).get('macro avg', {})
+              print(f'- **Accuracy:** {metrics.get(\"accuracy\", 0)*100:.2f}%')
+              print(f'- **F1-Score:** {macro.get(\"f1-score\", 0)*100:.2f}%')
+              print(f'- **Precision:** {macro.get(\"precision\", 0)*100:.2f}%')
+              print(f'- **Recall:** {macro.get(\"recall\", 0)*100:.2f}%')
+              print(f'- **ROC-AUC:** {metrics.get(\"roc_auc\", 0)*100:.2f}%')
+          except:
+              print('Metrics not available')
+          ")
+          
+          ## 📊 Dataset
+          
+          $(poetry run python -c "
+          import pandas as pd
+          try:
+              df = pd.read_csv('data/processed/hotel_bookings.csv')
+              print(f'- Total records: {len(df):,}')
+              print(f'- Features: {len(df.columns)}')
+              print(f'- Cancellation rate: {df[\"is_canceled\"].mean()*100:.1f}%')
+          except:
+              print('Dataset statistics not available')
+          ")
+          
+          ## 🚀 Deployment
+          
+          - HuggingFace Space: [Hotel-Booking](https://huggingface.co/spaces/aelsayed1/Hotel-Booking)
+          - Model file: \`best_model.pkl\` (included in release assets)
+          
+          ## 📦 Release Assets
+          
+          - \`best_model.pkl\` - Trained XGBoost model with preprocessing pipeline
+          - \`evaluation_report.json\` - Complete model evaluation metrics
+          - \`model_results.csv\` - Comparison of all trained models
+          
+          ## 🔧 Requirements
+          
+          - Python >= 3.11
+          - scikit-learn == 1.8.0
+          - xgboost >= 2.1.1
+          - See \`requirements.txt\` for complete dependencies
+          EOF
+
+      - name: Create Release Archive
+        run: |
+          mkdir -p release_package
+          cp reports/best_model.pkl release_package/ || echo "Model not found"
+          cp reports/evaluation_report.json release_package/ || echo "Report not found"
+          cp reports/model_results.csv release_package/ || echo "Results not found"
+          cp Hotel-Booking/requirements.txt release_package/ || echo "Requirements not found"
+          cp Hotel-Booking/app.py release_package/ || echo "App not found"
+          tar -czf hotel-booking-predictor-${{ steps.release_notes.outputs.version }}.tar.gz release_package/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release_notes.outputs.version }}
+          name: Hotel Booking Predictor ${{ steps.release_notes.outputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            hotel-booking-predictor-${{ steps.release_notes.outputs.version }}.tar.gz
+            reports/best_model.pkl
+            reports/evaluation_report.json
+            reports/model_results.csv
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "✅ Release ${{ steps.release_notes.outputs.version }} created successfully!"
+          echo "📦 Assets uploaded and ready for download"

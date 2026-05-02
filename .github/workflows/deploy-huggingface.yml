@@ -1,0 +1,71 @@
+name: Deploy to HuggingFace Spaces
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - 'Hotel-Booking/**'
+      - 'reports/best_model.pkl'
+      - '.github/workflows/deploy-huggingface.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+
+      - name: Export Model for Deployment
+        run: poetry run python scripts/export_model_for_deployment.py
+
+      - name: Verify Model Export
+        run: |
+          if [ ! -f "Hotel-Booking/best_model.pkl" ]; then
+            echo "Error: Model file not found!"
+            exit 1
+          fi
+          echo "Model file size: $(du -h Hotel-Booking/best_model.pkl | cut -f1)"
+
+      - name: Setup Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Push to HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_REPO: "aelsayed1/Hotel-Booking"
+        run: |
+          cd Hotel-Booking
+          git init
+          git remote add hf https://huggingface.co/spaces/$HF_SPACE_REPO || git remote set-url hf https://huggingface.co/spaces/$HF_SPACE_REPO
+          git fetch hf
+          git checkout -b main
+          git add .
+          git commit -m "🚀 Auto-deploy from GitHub Actions" || echo "No changes to commit"
+          git push https://user:$HF_TOKEN@huggingface.co/spaces/$HF_SPACE_REPO main --force
+
+      - name: Deploy Notification
+        if: success()
+        run: |
+          echo "✅ Successfully deployed to HuggingFace Spaces!"
+          echo "🔗 https://huggingface.co/spaces/aelsayed1/Hotel-Booking"

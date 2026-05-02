@@ -1,0 +1,134 @@
+name: Documentation & Reports
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'reports/**'
+  workflow_dispatch:
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+
+      - name: Generate Project Statistics
+        run: |
+          echo "# Project Statistics" > docs/statistics.md
+          echo "" >> docs/statistics.md
+          echo "Generated: $(date)" >> docs/statistics.md
+          echo "" >> docs/statistics.md
+          echo "## Code Statistics" >> docs/statistics.md
+          echo "\`\`\`" >> docs/statistics.md
+          echo "Python Files: $(find src -name '*.py' | wc -l)" >> docs/statistics.md
+          echo "Test Files: $(find tests -name '*.py' | wc -l)" >> docs/statistics.md
+          echo "Total Lines: $(find src -name '*.py' -exec wc -l {} + | tail -1)" >> docs/statistics.md
+          echo "\`\`\`" >> docs/statistics.md
+          echo "" >> docs/statistics.md
+          echo "## Dataset Statistics" >> docs/statistics.md
+          poetry run python -c "
+          import pandas as pd
+          df = pd.read_csv('data/processed/hotel_bookings.csv')
+          print(f'Total Records: {len(df):,}')
+          print(f'Features: {len(df.columns)}')
+          print(f'Cancellation Rate: {df[\"is_canceled\"].mean()*100:.1f}%')
+          " >> docs/statistics.md
+
+      - name: Generate Model Documentation
+        run: |
+          if [ -f "reports/evaluation_report.json" ]; then
+            echo "# Model Performance" > docs/model_performance.md
+            echo "" >> docs/model_performance.md
+            poetry run python -c "
+            import json
+            with open('reports/evaluation_report.json') as f:
+                data = json.load(f)
+            metrics = data.get('standard_metrics', {})
+            print('## Best Model Metrics')
+            print('')
+            print(f'- **Accuracy:** {metrics.get(\"accuracy\", 0)*100:.2f}%')
+            print(f'- **ROC-AUC:** {metrics.get(\"roc_auc\", 0)*100:.2f}%')
+            print('')
+            " >> docs/model_performance.md
+          fi
+
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/
+          retention-days: 90
+
+  test-coverage-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3
+        with:
+          poetry-version: "1.8.3"
+
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
+
+      - name: Generate Coverage Report
+        run: |
+          poetry run pytest --cov=src --cov-report=html --cov-report=term tests/
+          
+      - name: Upload Coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-report
+          path: htmlcov/
+          retention-days: 30
+
+      - name: Generate Coverage Badge
+        run: |
+          COVERAGE=$(poetry run pytest --cov=src --cov-report=term tests/ | grep TOTAL | awk '{print $4}' | sed 's/%//')
+          echo "Coverage: $COVERAGE%"
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+
+      - name: Create Coverage Summary
+        run: |
+          echo "# Test Coverage Report" > coverage_summary.md
+          echo "" >> coverage_summary.md
+          echo "**Coverage:** ${{ env.COVERAGE }}%" >> coverage_summary.md
+          echo "" >> coverage_summary.md
+          echo "See full HTML report in artifacts." >> coverage_summary.md
+
+      - name: Upload Coverage Summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage_summary.md
+          retention-days: 90
