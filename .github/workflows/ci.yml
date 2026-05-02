@@ -47,8 +47,37 @@ jobs:
       - name: Evaluate Model
         run: poetry run python scripts/evaluate.py
 
+      - name: Check Model Quality
+        run: |
+          poetry run python -c "
+          import json
+          import sys
+
+          MIN_ACCURACY = 0.98
+
+          with open('reports/evaluation_report.json') as f:
+              metrics = json.load(f)
+
+          accuracy = metrics['standard_metrics']['accuracy']
+          f1 = metrics['classification_report']['macro avg']['f1-score']
+
+          print(f'Model Accuracy: {accuracy*100:.2f}%')
+          print(f'Model F1-Score: {f1*100:.2f}%')
+          print(f'Minimum Required Accuracy: {MIN_ACCURACY*100:.0f}%')
+
+          if accuracy < MIN_ACCURACY:
+              print(f'❌ DEPLOYMENT BLOCKED: Accuracy {accuracy*100:.2f}% is below threshold {MIN_ACCURACY*100:.0f}%')
+              sys.exit(1)
+          else:
+              print(f'✅ Model quality check passed!')
+          "
+
       - name: Export Model for Deployment
         run: poetry run python scripts/export_model_for_deployment.py
+
+      - name: Setup Git LFS
+        run: |
+          git lfs install
 
       - name: Setup Git for HuggingFace
         run: |
@@ -61,9 +90,12 @@ jobs:
         run: |
           cd Hotel-Booking
           git init
+          git lfs install
+          git lfs track "*.pkl"
           git remote add hf https://huggingface.co/spaces/aelsayed1/Hotel-Booking || git remote set-url hf https://huggingface.co/spaces/aelsayed1/Hotel-Booking
           git fetch hf main || git fetch hf master || true
           git checkout -B main
+          git add .gitattributes
           git add .
           git commit -m "Auto-deploy: $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
           git push https://aelsayed1:$HF_TOKEN@huggingface.co/spaces/aelsayed1/Hotel-Booking main --force
