@@ -1,90 +1,13 @@
-name: CI/CD Pipeline
+name: Test, Train & Deploy
 
 on:
   push:
     branches: ["master", "main"]
-  pull_request:
-    branches: ["master", "main", "dev", "stage"]
 
 jobs:
-  build-test:
+  test-train-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pypoetry
-            .venv
-          key: ${{ runner.os }}-poetry-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-${{ matrix.python-version }}-
-            ${{ runner.os }}-poetry-
-
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v3
-        with:
-          poetry-version: "1.8.3"
-
-      - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-
-      - name: Install Dependencies
-        run: poetry install --no-interaction --no-root
-
-      - name: Install Project
-        run: poetry install --no-interaction
-
-      - name: Code Quality - Linting (Flake8)
-        run: poetry run flake8 src scripts tests --max-line-length=100 --exclude=.venv,__pycache__
-        continue-on-error: true
-
-      - name: Code Formatting Check (Black)
-        run: poetry run black --check src scripts tests
-        continue-on-error: true
-
-      - name: Run Unit and Integration Tests with Coverage
-        run: poetry run pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term tests/
-
-      - name: Upload Coverage Reports
-        uses: codecov/codecov-action@v4
-        if: matrix.python-version == '3.11'
-        with:
-          files: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
-      - name: Upload Coverage HTML
-        uses: actions/upload-artifact@v4
-        if: matrix.python-version == '3.11'
-        with:
-          name: coverage-report
-          path: htmlcov/
-          retention-days: 30
-
-      - name: Training Pipeline Smoke Test
-        run: poetry run python scripts/train.py --models baseline,logistic
-        continue-on-error: true
-
-  data-validation:
-    runs-on: ubuntu-latest
-    needs: build-test
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -100,7 +23,9 @@ jobs:
           path: |
             ~/.cache/pypoetry
             .venv
-          key: ${{ runner.os }}-poetry-3.11-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
 
       - name: Install Poetry
         uses: abatilo/actions-poetry@v3
@@ -112,14 +37,41 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-interaction
 
-      - name: Run Data Validation
-        run: poetry run python scripts/validate_data.py
-        continue-on-error: true
+      - name: Run Tests
+        run: poetry run pytest tests/ --verbose
 
-      - name: Upload Validation Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: validation-results
-          path: reports/
-          retention-days: 15
+      - name: Train Model
+        run: poetry run python scripts/train.py --models xgboost
+        timeout-minutes: 30
+
+      - name: Evaluate Model
+        run: poetry run python scripts/evaluate.py
+
+      - name: Export Model for Deployment
+        run: poetry run python scripts/export_model_for_deployment.py
+
+      - name: Setup Git for HuggingFace
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Deploy to HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd Hotel-Booking
+          git init
+          git remote add hf https://huggingface.co/spaces/aelsayed1/Hotel-Booking || git remote set-url hf https://huggingface.co/spaces/aelsayed1/Hotel-Booking
+          git fetch hf main || git fetch hf master || true
+          git checkout -B main
+          git add .
+          git commit -m "Auto-deploy: $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
+          git push https://user:$HF_TOKEN@huggingface.co/spaces/aelsayed1/Hotel-Booking main --force
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "Pipeline completed successfully!"
+          echo "Tests passed"
+          echo "Model trained and evaluated"
+          echo "Deployed to: https://huggingface.co/spaces/aelsayed1/Hotel-Booking"
