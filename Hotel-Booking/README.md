@@ -17,7 +17,7 @@ An AI-powered system that predicts hotel booking cancellations with 99.6% accura
 
 ## 🎯 Features
 
-- **High Accuracy Predictions**: 99.8% accuracy, 99.6% F1-score  
+- **High Accuracy Predictions**: 99.8% accuracy, 99.6% F1-score
 - **Risk Assessment**: Detailed probability scores for each booking
 - **Business Recommendations**: Actionable insights to reduce cancellations
 - **Interactive Interface**: User-friendly Gradio web interface
@@ -47,6 +47,7 @@ The model analyzes 35+ booking features including:
 ## 💼 Business Impact
 
 Hotels can use this system to:
+
 - Proactively identify at-risk bookings
 - Implement targeted retention strategies
 - Optimize overbooking policies
@@ -55,6 +56,7 @@ Hotels can use this system to:
 ## 🔬 Technical Details
 
 Built with:
+
 - scikit-learn 1.8.0
 - XGBoost 2.1.4
 - Gradio 5.9.1
