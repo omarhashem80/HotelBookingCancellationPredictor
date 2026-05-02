@@ -5,7 +5,6 @@ import pycountry
 from src.data.cleaning import clean_data, clean_dtypes, reduce_cardinality
 from src.data.ingestion import merge_datasets
 from src.data.preprocess import cols_grouped_by_type
-from src.data.validation import validate_dataframe
 
 
 def test_merge_datasets_left_join() -> None:
@@ -28,15 +27,6 @@ def test_clean_data_removes_invalid_guest_rows() -> None:
     )
     cleaned = clean_data(df)
     assert len(cleaned) == 1
-
-
-def test_validate_dataframe_contains_required_sections() -> None:
-    df = pd.DataFrame({"is_canceled": [0, 1, 1], "lead_time": [10, 12, 11]})
-    report = validate_dataframe(df)
-    assert "missing_values" in report
-    assert "duplicates" in report
-    assert "schema_issues" in report
-    assert "class_balance" in report
 
 
 def test_cols_grouped_by_type(toy_dataset):

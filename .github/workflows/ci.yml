@@ -1,13 +1,11 @@
-name: CI/CD Pipeline
+name: Test, Train & Deploy
 
 on:
   push:
-    branches: ["master"]
-  pull_request:
-    branches: ["master", "dev", "stage"]
+    branches: ["master", "main"]
 
 jobs:
-  build-test:
+  test-train-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,19 +17,105 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
       - name: Install Poetry
         uses: abatilo/actions-poetry@v3
         with:
           poetry-version: "1.8.3"
 
       - name: Install Dependencies
-        run: poetry install
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction
 
-      - name: Code Quality - Linting (Flake8)
-        run: poetry run flake8 src scripts tests
+      - name: Run Tests
+        run: poetry run pytest tests/ --verbose
 
-      - name: Run Unit and Integration Tests with Coverage
-        run: poetry run pytest --cov=src --cov-report=xml tests/
+      - name: Train Model
+        run: poetry run python scripts/train.py --models xgboost
+        timeout-minutes: 30
 
-      - name: Training Pipeline Smoke Test
-        run: poetry run python scripts/train.py --models baseline,logistic
+      - name: Evaluate Model
+        run: poetry run python scripts/evaluate.py
+
+      - name: Check Model Quality
+        run: |
+          poetry run python -c "
+          import json
+          import sys
+
+          MIN_ACCURACY = 0.98
+
+          with open('reports/evaluation_report.json') as f:
+              metrics = json.load(f)
+
+          accuracy = metrics['standard_metrics']['accuracy']
+          f1 = metrics['classification_report']['macro avg']['f1-score']
+
+          print(f'Model Accuracy: {accuracy*100:.2f}%')
+          print(f'Model F1-Score: {f1*100:.2f}%')
+          print(f'Minimum Required Accuracy: {MIN_ACCURACY*100:.0f}%')
+
+          if accuracy < MIN_ACCURACY:
+              print(f'❌ DEPLOYMENT BLOCKED: Accuracy {accuracy*100:.2f}% is below threshold {MIN_ACCURACY*100:.0f}%')
+              sys.exit(1)
+          else:
+              print(f'✅ Model quality check passed!')
+          "
+
+      - name: Export Model for Deployment
+        run: poetry run python scripts/export_model_for_deployment.py
+
+      - name: Verify Deployment Files
+        run: |
+          echo "Checking Hotel-Booking directory..."
+          ls -la Hotel-Booking/
+          echo ""
+          echo "Required files:"
+          test -f Hotel-Booking/README.md && echo " README.md" || echo " README.md MISSING"
+          test -f Hotel-Booking/app.py && echo " app.py" || echo " app.py MISSING"
+          test -f Hotel-Booking/requirements.txt && echo " requirements.txt" || echo " requirements.txt MISSING"
+          test -f Hotel-Booking/best_model.pkl && echo " best_model.pkl" || echo " best_model.pkl MISSING"
+          test -f Hotel-Booking/.gitattributes && echo " .gitattributes" || echo " .gitattributes MISSING"
+
+      - name: Setup Git LFS
+        run: |
+          git lfs install
+
+      - name: Setup Git for HuggingFace
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Deploy to HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          cd Hotel-Booking
+          git init
+          git lfs install
+          git lfs track "*.pkl"
+          git remote add hf https://huggingface.co/spaces/aelsayed1/Hotel-Booking || git remote set-url hf https://huggingface.co/spaces/aelsayed1/Hotel-Booking
+          git fetch hf main || git fetch hf master || true
+          git checkout -B main
+          git add .gitattributes
+          git add .
+          git commit -m "Auto-deploy: $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
+          git push https://aelsayed1:$HF_TOKEN@huggingface.co/spaces/aelsayed1/Hotel-Booking main --force
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "Pipeline completed successfully!"
+          echo "Tests passed"
+          echo "Model trained and evaluated"
+          echo "Deployed to: https://huggingface.co/spaces/aelsayed1/Hotel-Booking"

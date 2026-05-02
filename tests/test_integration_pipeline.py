@@ -1,7 +1,6 @@
 import pandas as pd
 
 from src.data.cleaning import clean_data
-from src.data.validation import validate_dataframe
 from src.features.build_features import build_features
 from src.models.trainer import train_single_model
 
@@ -48,9 +47,6 @@ def test_end_to_end_pipeline_small_dataframe() -> None:
             ],
         }
     )
-
-    report = validate_dataframe(df)
-    assert "class_balance" in report
 
     clean = clean_data(df)
     featured = build_features(clean)

@@ -51,7 +51,7 @@ def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
             df[col] = df[col].astype("category")
     for col in BINARY_COLS:
         if col in df.columns:
-            df[col] = df[col].astype("int8").astype("category")
+            df[col] = df[col].fillna(0).astype("int8").astype("category")
     for col in INT_COLS:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
@@ -67,26 +67,28 @@ def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def reduce_cardinality(df: pd.DataFrame, col_name: str, top_k: int = 5) -> pd.DataFrame:
+def reduce_cardinality(
+    df: pd.DataFrame, col_name: str, top_k: int = 5
+) -> pd.DataFrame:
     top_k_categories = df[col_name].value_counts().head(top_k).index
-    df[col_name] = df[col_name].apply(lambda x: x if x in top_k_categories else "Other")
+    df[col_name] = df[col_name].apply(
+        lambda x: x if x in top_k_categories else "Other"
+    )
     return df
 
 
 def fill_missing_values(df: pd.DataFrame) -> pd.DataFrame:
-
-    cols_df = df.columns.tolist()
-    if "children" in cols_df:
+    if "children" in df.columns:
         df["children"] = df["children"].fillna(0)
-    if "country" in cols_df:
+    if "country" in df.columns:
         df["country"] = df["country"].fillna("Unknown")
-    if "agent" in cols_df:
+    if "agent" in df.columns:
         df["agent"] = df["agent"].fillna(0)
-    if "is_holiday" in cols_df:
+    if "is_holiday" in df.columns:
         df["is_holiday"] = df["is_holiday"].fillna(0)
-    if "days_to_next_holiday" in cols_df:
+    if "days_to_next_holiday" in df.columns:
         df["days_to_next_holiday"] = df["days_to_next_holiday"].fillna(-1)
-    if "days_from_last_holiday" in cols_df:
+    if "days_from_last_holiday" in df.columns:
         df["days_from_last_holiday"] = df["days_from_last_holiday"].fillna(-1)
     return df
 
@@ -96,7 +98,9 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     cleaned = df.copy()
     original_rows = len(cleaned)
     cleaned = cleaned.drop_duplicates().reset_index(drop=True)
-    logger.info("Dropped duplicates: {} -> {} rows", original_rows, len(cleaned))
+    logger.info(
+        "Dropped duplicates: {} -> {} rows", original_rows, len(cleaned)
+    )
     for col, k in (("agent", 10), ("country", 5)):
         if col in df.columns:
             cleaned = reduce_cardinality(cleaned, col, k)
@@ -107,7 +111,13 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     if columns_exist:
         before = len(cleaned)
         cleaned = cleaned[
-            ~((cleaned["adults"] == 0) & (cleaned["children"] == 0) & (cleaned["babies"] == 0))
+            ~(
+                (cleaned["adults"] == 0)
+                & (cleaned["children"] == 0)
+                & (cleaned["babies"] == 0)
+            )
         ]  # drop rows where no guests.
-        logger.info("Removed no-guest rows: {} -> {} rows", before, len(cleaned))
+        logger.info(
+            "Removed no-guest rows: {} -> {} rows", before, len(cleaned)
+        )
     return cleaned.reset_index(drop=True)
