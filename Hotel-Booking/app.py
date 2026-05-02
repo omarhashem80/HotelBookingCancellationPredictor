@@ -74,25 +74,10 @@ def predict_cancellation(
     # Create result message
     if prediction == 1:
         result = f"⚠️ **HIGH RISK OF CANCELLATION**\n\nProbability: {probability[1]*100:.1f}%"
-        recommendation = """
-**Recommended Actions:**
-- Contact guest to confirm booking
-- Offer incentives to maintain reservation
-- Consider overbooking buffer
-- Flag for follow-up
-        """
     else:
         result = f"✅ **LOW RISK OF CANCELLATION**\n\nProbability of cancellation: {probability[1]*100:.1f}%"
-        recommendation = """
-**Status:**
-- Booking appears stable
-- Standard confirmation process
-- No special intervention needed
-        """
-    
-    return result + "\n\n" + recommendation
+    return result
 
-# Create Gradio interface
 with gr.Blocks(title="Hotel Booking Cancellation Predictor") as demo:
     gr.Markdown("# 🏨 Hotel Booking Cancellation Predictor")
     gr.Markdown("Predict the likelihood of hotel booking cancellations using advanced ML")
