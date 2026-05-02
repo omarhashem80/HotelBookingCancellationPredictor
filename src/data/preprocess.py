@@ -8,6 +8,10 @@ from sklearn.pipeline import Pipeline
 from loguru import logger
 
 
+def extract_month(df: pd.DataFrame) -> pd.DataFrame:
+    return df.apply(lambda col: col.dt.month)
+
+
 def split_features_target(
     df: pd.DataFrame, target_col: str = "is_canceled"
 ) -> Tuple[pd.DataFrame, pd.Series]:
@@ -53,14 +57,16 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
 
     month_pipeline = Pipeline(
         steps=[
-            # (
-            #     "month",
-            #     FunctionTransformer(lambda s: s.apply(lambda col: col.dt.month), validate=False),
-            # ),
+            (
+                "month",
+                FunctionTransformer(
+                    extract_month,
+                    validate=False
+                ),
+            ),
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )
-
     preprocessor = ColumnTransformer(
         transformers=[
             ("num", numeric_pipeline, numerical_cols),
