@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 # Import page modules
-from pages import findings, feature_importance, model, product, conclusion
+from pages import findings, model, product, conclusion
 
 
 @st.cache_data
