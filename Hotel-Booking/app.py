@@ -14,16 +14,25 @@ def predict_cancellation(
     is_repeated_guest, previous_cancellations, previous_bookings,
     reserved_room, assigned_room, booking_changes,
     deposit_type, days_waiting, customer_type,
-    adr, parking_spaces, special_requests, days_to_holiday, days_from_holiday
+    adr, parking_spaces, special_requests, 
+    agent, company, is_holiday, reservation_status_date,
+    days_to_holiday, days_from_holiday
 ):
     """Predict if a hotel booking will be canceled."""
     
-    # Create input DataFrame
+    # Create arrival_date from components
+    arrival_date = datetime(arrival_year, arrival_month, arrival_day)
+    
+    # Parse reservation status date
+    res_date = pd.to_datetime(reservation_status_date)
+    
+    # Create input DataFrame with ALL features expected by the model
     input_data = pd.DataFrame({
         'hotel': [hotel],
         'lead_time': [lead_time],
         'arrival_date_year': [arrival_year],
         'arrival_date_month': [arrival_month],
+        'arrival_date_week_number': [arrival_date.isocalendar()[1]],
         'arrival_date_day_of_month': [arrival_day],
         'stays_in_weekend_nights': [weekend_nights],
         'stays_in_week_nights': [week_nights],
@@ -41,21 +50,21 @@ def predict_cancellation(
         'assigned_room_type': [assigned_room],
         'booking_changes': [booking_changes],
         'deposit_type': [deposit_type],
+        'agent': [str(agent) if agent else "0"],
+        'company': [str(company) if company else ""],
         'days_in_waiting_list': [days_waiting],
         'customer_type': [customer_type],
         'adr': [adr],
         'required_car_parking_spaces': [parking_spaces],
         'total_of_special_requests': [special_requests],
+        'reservation_status_date': [res_date],
+        'arrival_date': [arrival_date],
+        'is_holiday': [1 if is_holiday == "Yes" else 0],
         'days_to_next_holiday': [days_to_holiday],
-        'days_from_prev_holiday': [days_from_holiday],
-        'total_nights': [weekend_nights + week_nights],
-        'total_guests': [adults + children + babies],
-        'arrival_date_week_number': [datetime(arrival_year, arrival_month, arrival_day).isocalendar()[1]],
-        'arrival_date_day_of_week': [datetime(arrival_year, arrival_month, arrival_day).weekday()],
-        'has_children': [1 if (children + babies) > 0 else 0],
-        'room_type_changed': [1 if reserved_room != assigned_room else 0],
-        'has_special_requests': [1 if special_requests > 0 else 0],
-        'has_deposit': [1 if deposit_type != "No Deposit" else 0]
+        'days_from_last_holiday': [days_from_holiday],
+        'reservation_status_year': [res_date.year],
+        'reservation_status_month': [res_date.month],
+        'reservation_status_day': [res_date.day]
     })
     
     # Make prediction
@@ -131,15 +140,23 @@ with gr.Blocks(title="Hotel Booking Cancellation Predictor") as demo:
             adr = gr.Number(label="Average Daily Rate", value=100)
             parking_spaces = gr.Number(label="Parking Spaces Required", value=0)
             special_requests = gr.Number(label="Special Requests", value=0)
+        
+        with gr.Column():
+            agent = gr.Textbox(label="Agent ID", value="0", placeholder="Travel agent ID or 0 for direct booking")
+            company = gr.Textbox(label="Company ID", value="", placeholder="Company ID (optional)")
+            is_holiday = gr.Radio(["Yes", "No"], label="Is Holiday Period", value="No")
+            reservation_status_date = gr.Textbox(label="Reservation Date", value="2024-07-01", placeholder="YYYY-MM-DD")
             days_to_holiday = gr.Number(label="Days to Next Holiday", value=30)
-            days_from_holiday = gr.Number(label="Days from Previous Holiday", value=30)
+            days_from_holiday = gr.Number(label="Days from Last Holiday", value=30)
     
     predict_btn = gr.Button("🔮 Predict Cancellation Risk", variant="primary")
     output = gr.Markdown()
     
     predict_btn.click(
         fn=predict_cancellation,
-        inputs=[hotel, lead_time, arrival_year, arrival_month, arrival_day,
+        inputs=[hotel, lead_time, arrival_year, arriv
+               agent, company, is_holiday, reservation_status_date,
+              al_month, arrival_day,
                weekend_nights, week_nights, adults, children, babies,
                meal, country, market_segment, distribution_channel,
                is_repeated_guest, previous_cancellations, previous_bookings,
