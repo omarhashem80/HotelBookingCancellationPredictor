@@ -43,6 +43,30 @@ INT_COLS = [
 FLOAT_COLS = ["adr"]
 
 DATE_COLS = ["arrival_date", "reservation_status_date"]
+nums = [
+    'lead_time',
+    'stays_in_weekend_nights',
+    'stays_in_week_nights',
+    'adults',
+    'children',
+    'babies',
+    'previous_cancellations',
+    'previous_bookings_not_canceled',
+    'booking_changes',
+    'company',
+    'days_in_waiting_list',
+    'adr',
+    'required_car_parking_spaces',
+    'total_of_special_requests',
+    'days_to_next_holiday',
+    'days_from_last_holiday',
+]
+
+
+def outlier_extraction(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    lower = df[col].quantile(0.01)
+    upper = df[col].quantile(0.99)
+    return df[(df[col] >= lower) & (df[col] <= upper)]
 
 
 def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
@@ -120,5 +144,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         logger.info(
             "Removed no-guest rows: {} -> {} rows", before, len(cleaned)
         )
-
+    for col in df.columns:
+        if col in nums:
+            cleaned = outlier_extraction(cleaned, col)
     return cleaned.reset_index(drop=True)
