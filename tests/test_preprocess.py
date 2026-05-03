@@ -3,7 +3,7 @@ import pandas as pd
 
 from src.data.preprocess import (
     split_features_target,
-    cols_grouped_by_type,
+    adjust_types,
     build_preprocessor,
 )
 
@@ -37,7 +37,7 @@ def test_split_missing_target_raises():
 
 
 def test_cols_grouping(toy_df):
-    num, cat, date = cols_grouped_by_type(toy_df)
+    num, cat, date = adjust_types()
 
     assert "num1" in num
     assert "num2" in num

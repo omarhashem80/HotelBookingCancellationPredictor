@@ -63,7 +63,7 @@ def main() -> None:
     setup_mlflow(settings.mlflow_tracking_uri)
 
     root = settings.project_root
-    processed_path = root / "data/processed/hotel_bookings_processed.csv"
+    processed_path = root / "data/processed/hotel_bookings.csv"
 
     if not processed_path.exists():
         logger.info("Processed data missing; running preprocessing pipeline")

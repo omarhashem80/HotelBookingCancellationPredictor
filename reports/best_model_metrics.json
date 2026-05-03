@@ -1,10 +1,9 @@
 {
-  "model": "xgboost",
-  "accuracy": 0.9983377278459246,
-  "precision": 0.9991633549466639,
-  "recall": 0.9947938359017077,
-  "f1": 0.9969738077846186,
-  "roc_auc": 0.9998334389828344,
-  "false_negative_rate": 0.005206164098292378,
-  "cost_sensitive_score": -129.0
+  "model": "logistic",
+  "accuracy": 0.9728164248437231,
+  "precision": 1.0,
+  "recall": 0.9012705686315351,
+  "f1": 0.9480718667835232,
+  "false_negative_rate": 0.0987294313684649,
+  "cost_sensitive_score": -2370.0
 }

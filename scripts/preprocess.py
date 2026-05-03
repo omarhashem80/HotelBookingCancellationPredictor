@@ -1,8 +1,4 @@
-import json
 from pathlib import Path
-
-from loguru import logger
-
 from loguru import logger
 
 from scripts.validate_data import run_hotel_validation

@@ -13,12 +13,58 @@ from src.evaluation.metrics import calculate_classification_metrics
 from src.data.preprocess import build_preprocessor, split_features_target
 
 from src.models.baseline import get_baseline_estimator
-from src.models.catboost import catboost_param_grid, get_catboost_estimator
-from src.models.histboost import get_histboost_estimator, histboost_param_grid
-from src.models.logistic import get_logistic_estimator, logistic_param_grid
-from src.models.adaboost import get_ada_boost_estimator, ada_boost_param_grid
-from src.models.xgboost import get_xgboost_estimator, xgboost_param_grid
+from src.models.catboost import get_catboost_estimator, get_catboost_param_grid
+from src.models.histboost import get_histboost_estimator, get_histboost_param_grid
+from src.models.logistic import get_logistic_estimator, get_logistic_param_grid
+from src.models.adaboost import get_ada_boost_estimator, get_ada_boost_param_grid
+from src.models.xgboost import get_xgboost_estimator, get_xgboost_param_grid
 
+
+SCHEMA = {
+    # categorical
+    "hotel": "category",
+    "meal": "category",
+    "country": "category",
+    "market_segment": "category",
+    "distribution_channel": "category",
+    "reserved_room_type": "category",
+    "assigned_room_type": "category",
+    "deposit_type": "category",
+    "customer_type": "category",
+    "agent": "category",
+
+    # binary
+    "is_repeated_guest": "binary",
+    "is_holiday": "binary",
+    "is_canceled": "binary",
+
+    # numeric (no need to split int types)
+    "arrival_date_year": "numeric",
+    "arrival_date_week_number": "numeric",
+    "arrival_date_day_of_month": "numeric",
+    "arrival_date_month": "numeric",
+    "lead_time": "numeric",
+    "stays_in_weekend_nights": "numeric",
+    "stays_in_week_nights": "numeric",
+    "adults": "numeric",
+    "children": "numeric",
+    "babies": "numeric",
+    "previous_cancellations": "numeric",
+    "previous_bookings_not_canceled": "numeric",
+    "booking_changes": "numeric",
+    "days_in_waiting_list": "numeric",
+    "required_car_parking_spaces": "numeric",
+    "total_of_special_requests": "numeric",
+    "days_to_next_holiday": "numeric",
+    "days_from_last_holiday": "numeric",
+
+    # float
+    "adr": "numeric",
+
+    # datetime
+    "arrival_date": "datetime",
+    "reservation_status_date": "datetime"
+}
 
 @dataclass
 class TrainingResult:
@@ -31,14 +77,48 @@ class TrainingResult:
     X_test: pd.DataFrame
 
 
-def _model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
+def enforce_schema(df, schema):
+    df = df.copy()
+    for col, dtype in schema.items():
+
+        if dtype == "category":
+            df[col] = df[col].astype("string").astype("category")
+
+        elif dtype == "binary":
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("int8")
+
+        elif dtype == "numeric":
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        elif dtype == "datetime":
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+
+    return df
+
+
+def get_model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
     return {
         "baseline": (get_baseline_estimator(), {}),
-        "logistic": (get_logistic_estimator(random_state), logistic_param_grid()),
-        "xgboost": (get_xgboost_estimator(random_state), xgboost_param_grid()),
-        "catboost": (get_catboost_estimator(random_state), catboost_param_grid()),
-        "histboost": (get_histboost_estimator(random_state), histboost_param_grid()),
-        "ada_boost": (get_ada_boost_estimator(random_state), ada_boost_param_grid()),
+        "logistic": (
+            get_logistic_estimator(random_state),
+            get_logistic_param_grid(),
+        ),
+        "xgboost": (
+            get_xgboost_estimator(random_state),
+            get_xgboost_param_grid(),
+        ),
+        "catboost": (
+            get_catboost_estimator(random_state),
+            get_catboost_param_grid(),
+        ),
+        "histboost": (
+            get_histboost_estimator(random_state),
+            get_histboost_param_grid(),
+        ),
+        "ada_boost": (
+            get_ada_boost_estimator(random_state),
+            get_ada_boost_param_grid(),
+        ),
     }
 
 
@@ -54,11 +134,11 @@ def run_model_pipeline(
     sampler: Optional[Any] = None,
     random_state: int = 42,
     cv_splits: int = 5,
-) -> tuple[float, Any, dict[str, float], list[int]]:
+) -> tuple [Any, dict[str, float], list[int]]:
 
-    PipelineClass = ImbPipeline if sampler is not None else Pipeline
+    PipelineClass = ImbPipeline if sampler else Pipeline
 
-    steps = [("preprocessing", build_preprocessor(X_train))]
+    steps = [("preprocessing", build_preprocessor())]
 
     if selector is not None:
         steps.append(("feature_selection", selector))
@@ -70,39 +150,39 @@ def run_model_pipeline(
 
     pipeline = PipelineClass(steps=steps)
 
-    cv = StratifiedKFold(n_splits=cv_splits, shuffle=True, random_state=random_state)
-
-    param_grid = {f"model__{k}": v for k, v in param_grid.items()}
+    cv = StratifiedKFold(
+        n_splits=cv_splits,
+        shuffle=True,
+        random_state=random_state,
+    )
 
     search = GridSearchCV(
         estimator=pipeline,
-        param_grid=param_grid or {},
+        param_grid={f"model__{k}": v for k, v in (param_grid or {}).items()},
         cv=cv,
         scoring="f1",
         n_jobs=-1,
         error_score="raise",
     )
 
-    logger.info("Fitting model pipeline with params={}", list(param_grid.keys()))
+    logger.info("Training pipeline: model={}, params={}", name, list(param_grid.keys()))
 
     search.fit(X_train, y_train)
 
     best_model = search.best_estimator_
 
     y_pred = best_model.predict(X_test)
-    y_prob = (
-        best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
-    )
 
-    metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
+    metrics = calculate_classification_metrics(y_test.values, y_pred)
 
     logger.info(
-        "Model pipeline complete: best_score={:.4f}, f1={:.4f}",
+        "Done: model={}, best_cv_f1={:.4f}, test_f1={:.4f}",
+        name,
         search.best_score_,
         metrics.get("f1", 0.0),
     )
 
-    return search.best_score_, best_model, metrics, list(y_pred)
+    return best_model, metrics, list(y_pred)
 
 
 def train_single_model(
@@ -116,28 +196,34 @@ def train_single_model(
     cv_splits: int = 5,
 ) -> TrainingResult:
 
-    registry = _model_registry(random_state)
+    registry = get_model_registry(random_state)
 
     if model_name not in registry:
         raise ValueError(f"Unknown model: {model_name}")
 
-    logger.info("Training single model: {}", model_name)
+    logger.info("Starting training: {}", model_name)
+
+    df = enforce_schema(df, SCHEMA)
 
     X, y = split_features_target(df, target_col)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, stratify=y, random_state=random_state
+        X,
+        y,
+        test_size=test_size,
+        stratify=y,
+        random_state=random_state,
     )
+
     logger.info(
-        "Train/test split: train_rows={}, test_rows={}, test_size={}",
+        "Split done: train={}, test={}",
         X_train.shape[0],
         X_test.shape[0],
-        test_size,
     )
 
     model, param_grid = registry[model_name]
 
-    best_score, best_model, metrics, predictions = run_model_pipeline(
+    best_model, metrics, predictions = run_model_pipeline(
         name=model_name,
         model=model,
         param_grid=param_grid,
