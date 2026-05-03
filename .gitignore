@@ -9,6 +9,7 @@ Desktop.ini
 *.swp
 *.swo
 
+catboost_info/
 
 # Logs
 *.log

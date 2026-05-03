@@ -1,9 +1,9 @@
 {
-  "model": "logistic",
-  "accuracy": 0.973217870046453,
-  "precision": 0.9997693726937269,
-  "recall": 0.9029368881483024,
-  "f1": 0.9488891321002517,
-  "false_negative_rate": 0.09706311185169757,
-  "cost_sensitive_score": -2331.0
+  "model": "catboost",
+  "accuracy": 0.9983364882693742,
+  "precision": 0.998744769874477,
+  "recall": 0.9952053366687513,
+  "f1": 0.9969719118721938,
+  "false_negative_rate": 0.004794663331248697,
+  "cost_sensitive_score": -121.0
 }

@@ -1,7 +1,7 @@
 import pandas as pd
 from loguru import logger
 
-from src.models.trainer import group_rare_categories
+from src.utils.helpers import group_rare_categories
 
 CATEGORICAL_COLS = [
     "hotel",
