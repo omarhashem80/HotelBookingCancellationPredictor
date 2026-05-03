@@ -64,7 +64,6 @@ def build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
         ]
     )
 
-    # Month pipeline: only impute, do NOT scale or one-hot encode
     month_pipeline = Pipeline(
         steps=[
             (

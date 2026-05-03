@@ -29,3 +29,6 @@ format:
 
 eda: data/raw/hotel_bookings_with_holidays.csv
 	${PYTHON} scripts/generate_eda_reports.py
+
+streamlit:
+	poetry run streamlit run app.py
