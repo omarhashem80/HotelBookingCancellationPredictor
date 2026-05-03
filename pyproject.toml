@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hotel-cancellation-prediction"
 version = "0.1.0"
-description = "Production-grade hotel booking cancellation prediction pipeline"
+description = "hotel booking cancellation prediction pipeline"
 authors = ["Team 7"]
 readme = "README.md"
 packages = [
@@ -16,7 +16,7 @@ run-tests = "commands.run_tests:run_tests"
 python = ">=3.11,<3.14"
 pandas = "^2.2.2"
 numpy = "^2.1.1"
-scikit-learn = "1.8.0"
+scikit-learn = "1.7.2"
 xgboost = "^2.1.1"
 catboost = "^1.2.7"
 mlflow = "^2.17.2"
