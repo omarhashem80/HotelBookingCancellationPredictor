@@ -3,7 +3,7 @@ from sklearn.metrics import confusion_matrix
 
 
 def confusion_breakdown(y_true: pd.Series, y_pred: pd.Series) -> dict[str, int]:
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
     return {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)}
 
 

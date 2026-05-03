@@ -22,14 +22,15 @@ from src.visualization.model_plots import plot_confusion, plot_roc
 
 
 def _json_safe(obj: object) -> object:
-    """Recursively normalize objects so they can be serialized to JSON."""
     if isinstance(obj, dict):
         return {str(key): _json_safe(value) for key, value in obj.items()}
     if isinstance(obj, list):
         return [_json_safe(item) for item in obj]
     if isinstance(obj, tuple):
         return [_json_safe(item) for item in obj]
-    return obj
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    return str(obj)
 
 
 def main() -> None:
@@ -64,12 +65,13 @@ def main() -> None:
         "cost_sensitive_score": cost_sensitive_score(y_test, pd.Series(y_pred)),
     }
 
-    if {"adr", "total_nights"}.issubset(X_test.columns):
+    if {"adr", "total_nights", "deposit_type"}.issubset(X_test.columns):
         business["revenue_loss_estimate"] = revenue_loss_estimate(
             y_test,
             pd.Series(y_pred),
             X_test["adr"],
             X_test["total_nights"],
+            X_test["deposit_type"],
         )
 
     errors = {
