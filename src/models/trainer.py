@@ -80,6 +80,8 @@ class TrainingResult:
 def enforce_schema(df, schema):
     df = df.copy()
     for col, dtype in schema.items():
+        if col not in df.columns:
+            continue
 
         if dtype == "category":
             df[col] = df[col].astype("string").astype("category")
