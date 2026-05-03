@@ -6,13 +6,7 @@ Production-style supervised ML pipeline for predicting hotel booking cancellatio
 
 Business problem: hotels lose revenue when likely cancellations are not identified early enough. This project predicts `is_canceled` from booking attributes and holiday-related context.
 
-Primary dataset:
-
-- `data/raw/hotel_bookings_with_holidays.csv`
-
-Secondary source support:
-
-- `src/data/ingestion.py` supports optional second dataset merge by key(s).
+The pipeline covers ingestion, validation, cleaning, feature engineering, multi-model training with hyperparameter search, MLflow experiment tracking, business metric evaluation, and automated deployment to HuggingFace Spaces via GitHub Actions.
 
 ## Quick Start
 
@@ -40,10 +34,17 @@ make train
 make evaluate
 ```
 
-Fast smoke training:
+Train a specific model or a comma-separated list:
 
 ```bash
-poetry run python scripts/train.py --models baseline,logistic --fast
+poetry run python -m scripts.train --models baseline,logistic,xgboost,catboost,histboost,adaboost
+```
+
+Optional flags:
+
+```bash
+--use-smote       # Apply SMOTE oversampling
+--use-selector    # Apply XGBoost-based feature selection
 ```
 
 ### 4. Run Tests
@@ -60,22 +61,31 @@ poetry run mlflow ui --backend-store-uri ./mlruns
 
 Open http://127.0.0.1:5000 in your browser.
 
+### 6. Streamlit App
+
+```bash
+make streamlit
+```
+
 ## Makefile Commands
 
 - `make install`: install dependencies
 - `make preprocess`: run ingestion + validation + cleaning + feature engineering
-- `make train`: train and compare models, log to MLflow, save best model
+- `make train`: train model(s) and log to MLflow, save best model
 - `make evaluate`: evaluate saved best model and generate report/plots
 - `make test`: run pytest suite
 - `make lint`: run flake8 checks
 - `make format`: run black formatter
-- `make eda`: open notebooks folder in Jupyter
+- `make eda`: generate EDA reports
+- `make streamlit`: launch the Streamlit dashboard
 
 ## Folder Structure
 
 ```text
 project/
 ├── data/
+│   ├── raw/
+│   └── processed/
 ├── notebooks/
 ├── scripts/
 ├── src/
@@ -89,39 +99,55 @@ project/
 │   └── utils/
 ├── tests/
 ├── reports/
+│   └── figures/
 ├── mlruns/
+├── Hotel-Booking/
 └── .github/workflows/
 ```
 
 ## Modeling Coverage
 
-Implemented models:
+Six models are implemented and tracked via MLflow:
 
 - Baseline (`DummyClassifier`)
 - Logistic Regression
-- Random Forest
 - XGBoost
-- CatBoost (with native categorical support + early stopping)
+- CatBoost
+- HistGradientBoosting
+- AdaBoost
+
+All models are trained inside a scikit-learn `Pipeline` with a shared preprocessing step (imputation, scaling, one-hot encoding). Hyperparameters are tuned via `GridSearchCV` with stratified 5-fold cross-validation optimising F1.
+
+Current best model: **CatBoost** — F1: 0.9970, Accuracy: 99.83%
+
+## Evaluation Metrics
+
+Each trained run logs:
+
+**Standard:** accuracy, precision, recall, F1
+
+**Business:** false negative rate, cost-sensitive score (FN penalised 5× over FP), revenue loss estimate (ADR × nights × deposit type)
 
 ## Expected Outputs
 
 After `make train`:
 
-- `reports/best_model.pkl`
-- `reports/best_model_metrics.json`
-- `reports/model_results.csv`
+- Trained best model artifact
+- Best model metrics (JSON)
+- Model comparison results (CSV)
 - MLflow runs under `mlruns/`
+- Model comparison chart
 
 After `make evaluate`:
 
-- `reports/evaluation_report.json`
-- `reports/figures/confusion_matrix.png`
-- `reports/figures/roc_curve.png` (if probabilities available)
+- Evaluation report (JSON) with standard metrics, business metrics, classification report, and error analysis
+- Confusion matrix plot
+- ROC curve plot (when probabilities are available)
 
 ## CI/CD Pipeline
 
-Continuous Integration and automated testing is handled natively via [GitHub Actions](.github/workflows/ci.yml).
+GitHub Actions triggers on every push to `main`/`master` and runs the full pipeline: install → test → preprocess → train → evaluate → quality gate (accuracy ≥ 98%) → export → deploy to HuggingFace Spaces.
 
-## Team Contributions
+The trained model is tracked with Git LFS and deployed automatically on passing all checks.
 
-Add your names and contribution breakdown here.
+Live demo: https://huggingface.co/spaces/aelsayed1/Hotel-Booking
