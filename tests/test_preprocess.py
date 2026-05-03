@@ -84,7 +84,6 @@ class TestSplitFeaturesTarget:
         assert y.name == "label"
 
     def test_empty_features_after_split(self):
-        """Only the target column present → X should be empty."""
         df = pd.DataFrame({"is_canceled": [0, 1]})
         X, y = split_features_target(df)
         assert X.empty
