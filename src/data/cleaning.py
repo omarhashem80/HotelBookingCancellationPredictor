@@ -1,6 +1,8 @@
 import pandas as pd
 from loguru import logger
 
+from src.models.trainer import group_rare_categories
+
 CATEGORICAL_COLS = [
     "hotel",
     "arrival_date_month",
@@ -43,6 +45,36 @@ INT_COLS = [
 FLOAT_COLS = ["adr"]
 
 DATE_COLS = ["arrival_date", "reservation_status_date"]
+nums = [
+    'lead_time',
+    'stays_in_weekend_nights',
+    'stays_in_week_nights',
+    'adults',
+    'children',
+    'babies',
+    'previous_cancellations',
+    'previous_bookings_not_canceled',
+    'booking_changes',
+    'company',
+    'days_in_waiting_list',
+    'adr',
+    'required_car_parking_spaces',
+    'total_of_special_requests',
+    'days_to_next_holiday',
+    'days_from_last_holiday',
+]
+
+
+def outlier_extraction(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    lower = round(df[col].quantile(0.01))
+    upper = round(df[col].quantile(0.99))
+    outlier_pct = ((df[col] < lower) | (df[col] > upper)).mean() * 100
+    print(
+        f"{col}: {outlier_pct:.2f}% outliers"
+        f"({(outlier_pct/100 * len(df)):.0f} rows)"
+    )
+    df[col] = df[col].clip(lower=lower, upper=upper)
+    return df
 
 
 def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:
@@ -101,10 +133,9 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(
         "Dropped duplicates: {} -> {} rows", original_rows, len(cleaned)
     )
-    for col, k in (("agent", 10), ("country", 5)):
+    for col in CATEGORICAL_COLS:
         if col in df.columns:
-            cleaned = reduce_cardinality(cleaned, col, k)
-            logger.info("Reduced cardinality for {} to top_k={}", col, k)
+            cleaned = group_rare_categories(cleaned, col, 900)
     cleaned = fill_missing_values(cleaned)
     cleaned = clean_dtypes(cleaned)
     columns_exist = all([_ in df.columns.tolist() for _ in cols_to_check])
@@ -120,5 +151,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         logger.info(
             "Removed no-guest rows: {} -> {} rows", before, len(cleaned)
         )
-
+    for col in df.columns:
+        if col in nums:
+            cleaned = outlier_extraction(cleaned, col)
     return cleaned.reset_index(drop=True)

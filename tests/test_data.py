@@ -32,12 +32,12 @@ def test_clean_data_removes_invalid_guest_rows() -> None:
 def test_cols_grouped_by_type(toy_dataset):
     cleaned_types_df = clean_dtypes(toy_dataset)
     numerical_cols, categorical_cols, date_cols = get_types()
-    assert len(numerical_cols) == 9
-    assert len(categorical_cols) == 4
+    assert len(numerical_cols) == 20
+    assert len(categorical_cols) == 11
     assert 'is_canceled' not in numerical_cols
     assert 'adr' in numerical_cols
     assert 'reserved_room_type' in categorical_cols
-    assert 'reservation_status_date' in date_cols
+    assert 'arrival_date_month' in date_cols
 
 
 @pytest.mark.parametrize(

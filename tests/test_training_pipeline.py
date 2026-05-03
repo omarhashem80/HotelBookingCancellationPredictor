@@ -36,7 +36,9 @@ def hotel_dataset():
             "is_holiday": _repeated([0, 1], n),
             "is_canceled": _repeated([0, 1], n),
             "arrival_date": pd.date_range("2015-07-01", periods=n, freq="D"),
-            "reservation_status_date": pd.date_range("2015-07-02", periods=n, freq="D"),
+            "reservation_status_date": pd.date_range(
+                "2015-07-02", periods=n, freq="D"
+            ),
             "arrival_date_year": [2015] * n,
             "arrival_date_month": _repeated([7, 8], n),
             "arrival_date_week_number": (rows % 52) + 1,
@@ -85,15 +87,22 @@ def test_enforce_schema_casts_configured_columns(hotel_dataset):
 def test_model_registry_contains_expected_models():
     registry = get_model_registry(random_state=7)
 
-    assert {"baseline", "logistic", "xgboost", "catboost", "histboost", "ada_boost"} <= set(
-        registry
-    )
+    assert {
+        "baseline",
+        "logistic",
+        "xgboost",
+        "catboost",
+        "histboost",
+        "adaboost",
+    } <= set(registry)
     assert registry["baseline"][1] == {}
     assert "C" in registry["logistic"][1]
 
 
 def test_train_single_model_baseline_runs(hotel_dataset):
-    result = train_single_model(hotel_dataset, model_name="baseline", cv_splits=2)
+    result = train_single_model(
+        hotel_dataset, model_name="baseline", cv_splits=2
+    )
 
     assert isinstance(result, TrainingResult)
     assert result.model_name == "baseline"
@@ -101,8 +110,12 @@ def test_train_single_model_baseline_runs(hotel_dataset):
     assert len(result.predictions) == len(result.y_true)
 
 
-def test_train_single_model_logistic_returns_pipeline_and_test_split(hotel_dataset):
-    result = train_single_model(hotel_dataset, model_name="logistic", cv_splits=2)
+def test_train_single_model_logistic_returns_pipeline_and_test_split(
+    hotel_dataset,
+):
+    result = train_single_model(
+        hotel_dataset, model_name="logistic", cv_splits=2
+    )
 
     assert hasattr(result.best_model, "named_steps")
     assert "preprocessing" in result.best_model.named_steps
@@ -112,7 +125,9 @@ def test_train_single_model_logistic_returns_pipeline_and_test_split(hotel_datas
 
 
 def test_metrics_are_valid(hotel_dataset):
-    result = train_single_model(hotel_dataset, model_name="logistic", cv_splits=2)
+    result = train_single_model(
+        hotel_dataset, model_name="logistic", cv_splits=2
+    )
 
     for key in ["accuracy", "f1", "precision", "recall"]:
         assert 0.0 <= result.metrics[key] <= 1.0
