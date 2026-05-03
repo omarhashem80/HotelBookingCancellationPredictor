@@ -107,12 +107,10 @@ def predict_cancellation(
 
     # Create result message
     if prediction == 1:
-        result = "⚠️ **HIGH RISK OF CANCELLATION**\n\nProbability:"
-        f"{probability[1]*100:.1f}%"
+        result = "⚠️ **HIGH RISK OF CANCELLATION**"
     else:
         result = (
-            "✅ **LOW RISK OF CANCELLATION**\n\nProbability of"
-            f"cancellation: {probability[1]*100:.1f}%"
+            "✅ **LOW RISK OF CANCELLATION**"
         )
     return result
 
