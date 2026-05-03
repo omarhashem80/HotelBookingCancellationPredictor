@@ -28,7 +28,9 @@ from src.features.selection import get_xgb_feature_selector
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train cancellation prediction models")
+    parser = argparse.ArgumentParser(
+        description="Train cancellation prediction models"
+    )
 
     parser.add_argument(
         "--models",
@@ -61,24 +63,30 @@ def main() -> None:
     setup_mlflow(settings.mlflow_tracking_uri)
 
     root = settings.project_root
-    processed_path = root / "data/processed/hotel_bookings.csv"
+    processed_path = root / "data/processed/hotel_bookings_processed.csv"
 
     if not processed_path.exists():
         logger.info("Processed data missing; running preprocessing pipeline")
         run_preprocess()
 
     df = load_csv(processed_path)
-    logger.info("Loaded processed data: rows={}, cols={}", df.shape[0], df.shape[1])
+    logger.info(
+        "Loaded processed data: rows={}, cols={}", df.shape[0], df.shape[1]
+    )
 
     selected_models = [m.strip() for m in args.models.split(",") if m.strip()]
     logger.info("Training models: {}", ", ".join(selected_models))
 
-    sampler: Optional[object] = get_smote_sampler(settings.random_state) if args.use_smote else None
+    sampler: Optional[object] = (
+        get_smote_sampler(settings.random_state) if args.use_smote else None
+    )
     if sampler is not None:
         logger.info("SMOTE oversampling enabled")
 
     selector: Optional[object] = (
-        get_xgb_feature_selector(settings.random_state) if args.use_selector else None
+        get_xgb_feature_selector(settings.random_state)
+        if args.use_selector
+        else None
     )
     if selector is not None:
         logger.info("Feature selection enabled")
@@ -196,7 +204,9 @@ def main() -> None:
 
     plot_model_comparison(results_df, figures_dir)
 
-    logger.info("Training complete. Best model exists in reports/best_model.pkl")
+    logger.info(
+        "Training complete. Best model exists in reports/best_model.pkl"
+    )
 
 
 if __name__ == "__main__":

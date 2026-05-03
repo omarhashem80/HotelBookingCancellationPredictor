@@ -36,14 +36,18 @@ def main() -> None:
     settings = get_settings()
     root = settings.project_root
 
-    data_path = root / "data/processed/hotel_bookings.csv"
+    data_path = root / "data/processed/hotel_bookings_processed.csv"
     model_path = root / "reports/best_model.pkl"
 
     if not data_path.exists() or not model_path.exists():
-        raise FileNotFoundError("Processed data or trained model not found. Run make train first.")
+        raise FileNotFoundError(
+            "Processed data or trained model not found. Run make train first."
+        )
 
     df = load_csv(data_path)
-    logger.info("Loaded processed data: rows={}, cols={}", df.shape[0], df.shape[1])
+    logger.info(
+        "Loaded processed data: rows={}, cols={}", df.shape[0], df.shape[1]
+    )
     X = df.drop(columns=[settings.target_column])
     y = df[settings.target_column]
     _, X_test, _, y_test = train_test_split(
@@ -56,12 +60,18 @@ def main() -> None:
 
     model = load_model(model_path)
     y_pred = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
+    y_prob = (
+        model.predict_proba(X_test)[:, 1]
+        if hasattr(model, "predict_proba")
+        else None
+    )
 
     standard_metrics = calculate_classification_metrics(y_test, y_pred, y_prob)
     business = {
         "false_negative_rate": false_negative_rate(y_test, pd.Series(y_pred)),
-        "cost_sensitive_score": cost_sensitive_score(y_test, pd.Series(y_pred)),
+        "cost_sensitive_score": cost_sensitive_score(
+            y_test, pd.Series(y_pred)
+        ),
     }
 
     if {"adr", "total_nights"}.issubset(X_test.columns):
@@ -74,7 +84,9 @@ def main() -> None:
 
     errors = {
         "confusion_breakdown": confusion_breakdown(y_test, pd.Series(y_pred)),
-        "segment_error_analysis": segment_error_analysis(X_test, y_test, pd.Series(y_pred)),
+        "segment_error_analysis": segment_error_analysis(
+            X_test, y_test, pd.Series(y_pred)
+        ),
     }
 
     reports_dir = root / "reports"
@@ -87,7 +99,9 @@ def main() -> None:
     output = {
         "standard_metrics": standard_metrics,
         "business_metrics": business,
-        "classification_report": classification_report(y_test, y_pred, output_dict=True),
+        "classification_report": classification_report(
+            y_test, y_pred, output_dict=True
+        ),
         "error_analysis": errors,
     }
     safe_output = _json_safe(output)
