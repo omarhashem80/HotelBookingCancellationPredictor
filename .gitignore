@@ -90,3 +90,4 @@ reports/figures/*
 data/raw/hotel_bookings.csv
 reports/validation_report.*
 .taplo.toml
+catboost_info/*
