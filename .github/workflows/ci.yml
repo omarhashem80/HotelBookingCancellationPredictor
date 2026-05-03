@@ -46,7 +46,9 @@ jobs:
       - name: Train Model
         run: |
           rm -f reports/best_model.pkl reports/best_model_metrics.json
-          poetry run python scripts/train.py --models xgboost
+          BEST_MODEL=$(python -c "import json; print(json.load(open('reports/best_model_metrics.json'))['model'])" 2>/dev/null || echo "xgboost")
+          echo "Training best model: $BEST_MODEL"
+          poetry run python scripts/train.py --models "$BEST_MODEL"
         timeout-minutes: 30
 
       - name: Evaluate Model
