@@ -40,6 +40,9 @@ jobs:
       - name: Run Tests
         run: poetry run pytest tests/ --verbose
 
+      - name: Preprocess Data
+        run: poetry run python scripts/preprocess.py
+
       - name: Train Model
         run: poetry run python scripts/train.py --models xgboost
         timeout-minutes: 30
