@@ -185,7 +185,6 @@ class TestBuildPreprocessor:
         assert Xt.shape[1] > 0,       "No output columns produced"
 
     def test_fit_transform_no_nulls_in_output(self, minimal_df):
-        """Imputers should ensure zero NaNs in the transformed matrix."""
         df = minimal_df.copy()
         df.iloc[0, 0] = np.nan
         X, _ = split_features_target(df)
