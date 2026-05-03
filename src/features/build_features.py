@@ -68,6 +68,8 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     featured = df.copy()
     if "reservation_status" in df.columns.tolist():
         featured.drop("reservation_status", axis=1, inplace=True)
+    if "company" in df.columns.tolist():
+        featured.drop("company", axis=1, inplace=True)
     featured = add_datetime_features(featured)
     featured = featured.drop_duplicates().reset_index(drop=True)
     return featured
