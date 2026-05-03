@@ -12,8 +12,8 @@ from sklearn.pipeline import Pipeline
 from loguru import logger
 
 
-def extract_month(df: pd.DataFrame) -> pd.DataFrame:
-    return df.apply(lambda col: col.dt.month)
+# def extract_month(df: pd.DataFrame) -> pd.DataFrame:
+#     return df.apply(lambda col: col.dt.month)
 
 
 def split_features_target(

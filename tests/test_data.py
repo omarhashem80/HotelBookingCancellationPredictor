@@ -4,7 +4,7 @@ import pytest
 import pycountry
 from src.data.cleaning import clean_data, clean_dtypes, reduce_cardinality
 from src.data.ingestion import merge_datasets
-from src.data.preprocess import adjust_types
+from src.data.preprocess import get_types
 
 
 def test_merge_datasets_left_join() -> None:
@@ -31,7 +31,7 @@ def test_clean_data_removes_invalid_guest_rows() -> None:
 
 def test_cols_grouped_by_type(toy_dataset):
     cleaned_types_df = clean_dtypes(toy_dataset)
-    numerical_cols, categorical_cols, date_cols = adjust_types()
+    numerical_cols, categorical_cols, date_cols = get_types()
     assert len(numerical_cols) == 9
     assert len(categorical_cols) == 4
     assert 'is_canceled' not in numerical_cols

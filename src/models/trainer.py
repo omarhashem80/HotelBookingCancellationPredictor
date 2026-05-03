@@ -93,6 +93,15 @@ def enforce_schema(df, schema):
         elif dtype == "datetime":
             df[col] = pd.to_datetime(df[col], errors="coerce")
 
+    for col in df.select_dtypes(include=["object", "category"]).columns:
+        df = group_rare_categories(df, col, min_freq=900)
+
+    return df
+
+def group_rare_categories(df, col, min_freq=100):
+    counts = df[col].value_counts()
+    rare = counts[counts < min_freq].index
+    df[col] = df[col].replace(rare, "Other")
     return df
 
 
