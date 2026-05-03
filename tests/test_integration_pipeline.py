@@ -3,7 +3,7 @@ import numpy as np
 
 from src.data.cleaning import clean_data
 from src.features.build_features import build_features
-from src.models.trainer import train_single_model
+from src.models.trainer import spliter, train_single_model
 
 n = 200
 rng = np.random.default_rng(0)
@@ -49,7 +49,9 @@ def test_end_to_end_pipeline_small_dataframe() -> None:
 
     clean = clean_data(df)
     featured = build_features(clean)
+    featured["is_canceled"] = featured["is_canceled"].astype(int)
 
-    result = train_single_model(featured, model_name="baseline", cv_splits=2)
+    X_train, X_test, y_train, y_test = spliter(featured)
+    result = train_single_model(X_train, y_train, X_test, y_test, model_name="baseline", cv_splits=2)
     assert result.metrics["accuracy"] >= 0.0
     assert len(result.predictions) == len(result.y_true)

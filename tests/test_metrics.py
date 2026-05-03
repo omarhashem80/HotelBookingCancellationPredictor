@@ -151,11 +151,12 @@ class DummyModel:
 
 
 def test_evaluate_main_writes_report_with_business_and_error_sections(tmp_path, monkeypatch):
-    data_path = tmp_path / "data" / "processed" / "hotel_bookings_processed.csv"
+    processed_dir = tmp_path / "data" / "processed"
+    processed_dir.mkdir(parents=True)
     model_path = tmp_path / "reports" / "best_model.pkl"
-    data_path.parent.mkdir(parents=True)
     model_path.parent.mkdir(parents=True)
-    data_path.write_text("placeholder", encoding="utf-8")
+    (processed_dir / "X_test.csv").write_text("placeholder", encoding="utf-8")
+    (processed_dir / "y_test.csv").write_text("placeholder", encoding="utf-8")
     model_path.write_text("placeholder", encoding="utf-8")
 
     df = pd.DataFrame(
@@ -168,10 +169,13 @@ def test_evaluate_main_writes_report_with_business_and_error_sections(tmp_path, 
             "feature": np.arange(20),
         }
     )
+    X_df = df.drop(columns=["is_canceled"])
+    y_df = df[["is_canceled"]]
 
     monkeypatch.setattr(evaluate, "get_settings", lambda: DummySettings(project_root=tmp_path))
-    monkeypatch.setattr(evaluate, "load_csv", lambda path: df)
+    monkeypatch.setattr(evaluate, "load_csv", lambda path: X_df if "X_test" in str(path) else y_df)
     monkeypatch.setattr(evaluate, "load_model", lambda path: DummyModel())
+    monkeypatch.setattr(evaluate, "enforce_schema", lambda df, **kw: df)
     monkeypatch.setattr(evaluate, "plot_confusion", lambda *args, **kwargs: None)
     monkeypatch.setattr(evaluate, "plot_roc", lambda *args, **kwargs: None)
 
