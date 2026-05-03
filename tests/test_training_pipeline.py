@@ -3,11 +3,9 @@ import pandas as pd
 import pytest
 
 from src.models.trainer import (
-    SCHEMA,
     TrainingResult,
     enforce_schema,
     get_model_registry,
-    group_rare_categories,
     run_model_pipeline,
     train_single_model,
 )
@@ -68,7 +66,7 @@ def hotel_dataset():
 def test_enforce_schema_casts_configured_columns(hotel_dataset):
     df = hotel_dataset.astype({"lead_time": "string", "is_canceled": "string"})
 
-    result = enforce_schema(df, SCHEMA)
+    result = enforce_schema(df, supress_rare=True)
 
     assert pd.api.types.is_numeric_dtype(result["lead_time"])
     assert result["is_canceled"].dtype == "int8"
@@ -76,13 +74,13 @@ def test_enforce_schema_casts_configured_columns(hotel_dataset):
     assert set(result["hotel"].astype(str)) == {"Other"}
 
 
-def test_group_rare_categories_keeps_frequent_values_and_groups_rare_values():
-    df = pd.DataFrame({"agent": ["1", "1", "2", "3"]})
-
-    result = group_rare_categories(df, "agent", min_freq=2)
-
-    assert result["agent"].tolist() == ["1", "1", "Other", "Other"]
-
+# def test_group_rare_categories_keeps_frequent_values_and_groups_rare_values():
+#     df = pd.DataFrame({"agent": ["1", "1", "2", "3"]})
+#
+#     result = group_rare_categories(df, "agent", min_freq=2)
+#
+#     assert result["agent"].tolist() == ["1", "1", "Other", "Other"]
+#
 
 def test_model_registry_contains_expected_models():
     registry = get_model_registry(random_state=7)

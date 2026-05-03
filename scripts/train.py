@@ -14,7 +14,7 @@ from src.evaluation.business_metrics import (
     false_negative_rate,
     revenue_loss_estimate,
 )
-from src.models.trainer import train_single_model
+from src.models.trainer import train_single_model, spliter
 
 from src.tracking.logger import log_metrics, log_model, log_params
 from src.tracking.mlflow_config import setup_mlflow
@@ -104,14 +104,20 @@ def main() -> None:
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("Failed to read existing best metrics: {}", exc)
 
+    X_train, X_test, y_train, y_test = spliter(df, test_size=0.2, random_state=settings.random_state)
+
+    data_dir = root / "data/processed"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    X_test.to_csv(data_dir / "X_test.csv", index=False)
+    y_test.to_csv(data_dir / "y_test.csv", index=False)
+
     for model_name in selected_models:
         with mlflow.start_run(run_name=model_name):
             logger.info("Starting training for model={}", model_name)
 
             result = train_single_model(
-                df=df,
+                X_train, y_train, X_test, y_test,
                 model_name=model_name,
-                target_col=settings.target_column,
                 random_state=settings.random_state,
                 selector=selector,
                 sampler=sampler,

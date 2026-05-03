@@ -18,53 +18,8 @@ from src.models.histboost import get_histboost_estimator, get_histboost_param_gr
 from src.models.logistic import get_logistic_estimator, get_logistic_param_grid
 from src.models.adaboost import get_ada_boost_estimator, get_ada_boost_param_grid
 from src.models.xgboost import get_xgboost_estimator, get_xgboost_param_grid
+from src.utils.helpers import enforce_schema
 
-
-SCHEMA = {
-    # categorical
-    "hotel": "category",
-    "meal": "category",
-    "country": "category",
-    "market_segment": "category",
-    "distribution_channel": "category",
-    "reserved_room_type": "category",
-    "assigned_room_type": "category",
-    "deposit_type": "category",
-    "customer_type": "category",
-    "agent": "category",
-
-    # binary
-    "is_repeated_guest": "binary",
-    "is_holiday": "binary",
-    "is_canceled": "binary",
-
-    # numeric (no need to split int types)
-    "arrival_date_year": "numeric",
-    "arrival_date_week_number": "numeric",
-    "arrival_date_day_of_month": "numeric",
-    "arrival_date_month": "numeric",
-    "lead_time": "numeric",
-    "stays_in_weekend_nights": "numeric",
-    "stays_in_week_nights": "numeric",
-    "adults": "numeric",
-    "children": "numeric",
-    "babies": "numeric",
-    "previous_cancellations": "numeric",
-    "previous_bookings_not_canceled": "numeric",
-    "booking_changes": "numeric",
-    "days_in_waiting_list": "numeric",
-    "required_car_parking_spaces": "numeric",
-    "total_of_special_requests": "numeric",
-    "days_to_next_holiday": "numeric",
-    "days_from_last_holiday": "numeric",
-
-    # float
-    "adr": "numeric",
-
-    # datetime
-    "arrival_date": "datetime",
-    "reservation_status_date": "datetime"
-}
 
 @dataclass
 class TrainingResult:
@@ -75,34 +30,6 @@ class TrainingResult:
     best_params: dict[str, Any]
     y_true: list[int]
     X_test: pd.DataFrame
-
-
-def enforce_schema(df, schema):
-    df = df.copy()
-    for col, dtype in schema.items():
-
-        if dtype == "category":
-            df[col] = df[col].astype("string").astype("category")
-
-        elif dtype == "binary":
-            df[col] = pd.to_numeric(df[col], errors="coerce").astype("int8")
-
-        elif dtype == "numeric":
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        elif dtype == "datetime":
-            df[col] = pd.to_datetime(df[col], errors="coerce")
-
-    for col in df.select_dtypes(include=["object", "category"]).columns:
-        df = group_rare_categories(df, col, min_freq=900)
-
-    return df
-
-def group_rare_categories(df, col, min_freq=100):
-    counts = df[col].value_counts()
-    rare = counts[counts < min_freq].index
-    df[col] = df[col].replace(rare, "Other")
-    return df
 
 
 def get_model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
@@ -193,13 +120,24 @@ def run_model_pipeline(
 
     return best_model, metrics, list(y_pred)
 
+def spliter(df: pd.DataFrame, target_col: str = "is_canceled", test_size: float = 0.2, random_state: int = 42):
+    df = enforce_schema(df, supress_rare=True)
+    X, y = split_features_target(df, target_col)
+    return train_test_split(
+        X,
+        y,
+        test_size=test_size,
+        stratify=y,
+        random_state=random_state,
+    )
 
 def train_single_model(
-    df: pd.DataFrame,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
     model_name: str,
-    target_col: str = "is_canceled",
     random_state: int = 42,
-    test_size: float = 0.2,
     selector: Optional[Any] = None,
     sampler: Optional[Any] = None,
     cv_splits: int = 5,
@@ -211,18 +149,6 @@ def train_single_model(
         raise ValueError(f"Unknown model: {model_name}")
 
     logger.info("Starting training: {}", model_name)
-
-    df = enforce_schema(df, SCHEMA)
-
-    X, y = split_features_target(df, target_col)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=test_size,
-        stratify=y,
-        random_state=random_state,
-    )
 
     logger.info(
         "Split done: train={}, test={}",
