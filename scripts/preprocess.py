@@ -1,8 +1,4 @@
-import json
 from pathlib import Path
-
-from loguru import logger
-
 from loguru import logger
 
 from scripts.validate_data import run_hotel_validation
@@ -30,7 +26,6 @@ def run_preprocess() -> Path:
         "Cleaned data: rows={}, cols={}", cleaned.shape[0], cleaned.shape[1]
     )
     featured = build_features(cleaned)
-
     logger.info(
         "Built features: rows={}, cols={}",
         featured.shape[0],

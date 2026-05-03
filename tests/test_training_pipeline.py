@@ -58,7 +58,6 @@ def test_metrics_are_valid(toy_dataset):
 
     assert isinstance(metrics, dict)
 
-    # check common classification metrics
     for key in ["f1", "precision", "recall"]:
         if key in metrics:
             assert 0.0 <= metrics[key] <= 1.0

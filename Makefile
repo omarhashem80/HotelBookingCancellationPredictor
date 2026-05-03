@@ -1,5 +1,6 @@
 PYTHON := poetry run python
-
+MODELS :=logistic
+#xgboost ada_boost baseline histboost catboost logistic
 .PHONY: install preprocess merge_data validate train evaluate test lint format eda
 
 install:
@@ -14,7 +15,7 @@ preprocess:
 
 train:
 	$(PYTHON) -m scripts.train --models $(MODELS)
-	
+
 evaluate:
 	$(PYTHON) -m scripts.evaluate
 

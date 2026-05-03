@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
 import json
-from pathlib import Path
 
-# Import page modules
 from pages import findings, model, product, conclusion
 
 
@@ -22,6 +20,7 @@ def load_metrics():
     except Exception:
         return None
 
+
 def load_evaluation():
     try:
         with open("reports/evaluation_report.json", "r") as file:
@@ -30,34 +29,49 @@ def load_evaluation():
         return None
 
 
-st.set_page_config(page_title="Hotel Booking Insights", layout="wide", page_icon="🏨")
+st.set_page_config(
+    page_title="Hotel Booking Insights", layout="wide", page_icon="🏨"
+)
 
 st.title("🏨 Hotel Booking Cancellation Insights")
 st.markdown("### Predicting Cancellations Pre-Emptively")
 st.markdown("---")
 
-page = st.sidebar.radio("Navigation", [
-    "Business Overview", 
-    "Findings (EDA)", 
-    "Model Performance", 
-    "Product Module", 
-    "Conclusion"
-])
+page = st.sidebar.radio(
+    "Navigation",
+    [
+        "Business Overview",
+        "Findings (EDA)",
+        "Model Performance",
+        "Product Module",
+        "Conclusion",
+    ],
+)
 
 if page == "Business Overview":
     st.header("Executive Summary")
     st.markdown("""
-    Hotels regularly lose significant revenue due to unexpected, last-minute booking cancellations.
-    When a room is unexpectedly abandoned, it often remains vacant overnight, representing a total loss of potential inventory revenue.
+    Hotels regularly lose significant revenue due to unexpected, last-minute
+                booking cancellations.
+    When a room is unexpectedly abandoned, it often remains vacant overnight,
+                representing a total loss of potential inventory revenue.
 
     **Goal:**
-    Identify which bookings have the highest probability of being canceled *before* the cancellation happens, allowing our operations teams to:
+    Identify which bookings have the highest probability of being canceled
+                *before* the cancellation happens, allowing our operations
+                teams to:
     - **Overbook strategically**: Fill gaps in predicted risk segments.
-    - **Engage with guests**: Send email follow-ups or offer upgrades to secure the reservation.
-    - **Revise deposit policies**: Demand stricter deposits for segments heavily prone to cancellations.
+    - **Engage with guests**: Send email follow-ups or offer upgrades to
+                secure the reservation.
+    - **Revise deposit policies**: Demand stricter deposits for segments
+                heavily prone to cancellations.
     """)
-    st.success("By leveraging advanced Machine Learning on historical traits (lead time, room types, dates), we built an early-warning predictor to proactively combat vacant rooms.")
-    
+    st.success(
+        "By leveraging advanced Machine Learning on historical traits (lead "
+        "time, room types, dates), we built an early-warning predictor to "
+        "proactively combat vacant rooms."
+    )
+
     st.markdown("---")
     st.markdown("### Project Highlights")
     col1, col2, col3 = st.columns(3)

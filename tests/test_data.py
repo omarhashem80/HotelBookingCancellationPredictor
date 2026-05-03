@@ -31,20 +31,16 @@ def test_clean_data_removes_invalid_guest_rows() -> None:
 
 def test_cols_grouped_by_type(toy_dataset):
     cleaned_types_df = clean_dtypes(toy_dataset)
-    numerical_cols, categorical_cols, date_cols = cols_grouped_by_type(
-        cleaned_types_df
-    )
+    numerical_cols, categorical_cols, date_cols = cols_grouped_by_type(cleaned_types_df)
     assert len(numerical_cols) == 9
     assert len(categorical_cols) == 4
-    assert 'is_canceled' not in numerical_cols
-    assert 'adr' in numerical_cols
-    assert 'reserved_room_type' in categorical_cols
-    assert 'reservation_status_date' in date_cols
+    assert "is_canceled" not in numerical_cols
+    assert "adr" in numerical_cols
+    assert "reserved_room_type" in categorical_cols
+    assert "reservation_status_date" in date_cols
 
 
-@pytest.mark.parametrize(
-    "size,k_agent,k_country", [(10, 2, 4), (50, 4, 4), (200, 5, 5)]
-)
+@pytest.mark.parametrize("size,k_agent,k_country", [(10, 2, 4), (50, 4, 4), (200, 5, 5)])
 def test_reduce_cardinality(size, k_agent, k_country):
     rng = np.random.default_rng(42)
     all_countries = np.array(list(pycountry.countries))
@@ -59,8 +55,8 @@ def test_reduce_cardinality(size, k_agent, k_country):
     cols = ["agent", "country"]
     for col, k_col in zip(cols, [k_agent, k_country]):
         df = reduce_cardinality(df, col, k_col)
-    agent_cardi = len(df['agent'].unique())
-    country_cardi = len(df['country'].unique())
+    agent_cardi = len(df["agent"].unique())
+    country_cardi = len(df["country"].unique())
     # plus 1 -> to consider Other Category
     assert agent_cardi <= k_agent + 1
     assert country_cardi <= k_country + 1

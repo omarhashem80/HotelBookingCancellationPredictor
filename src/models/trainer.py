@@ -4,7 +4,11 @@ from typing import Any, Optional
 import pandas as pd
 from loguru import logger
 
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+from sklearn.model_selection import (
+    GridSearchCV,
+    StratifiedKFold,
+    train_test_split,
+)
 from sklearn.pipeline import Pipeline
 
 from imblearn.pipeline import Pipeline as ImbPipeline
@@ -34,11 +38,23 @@ class TrainingResult:
 def _model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
     return {
         "baseline": (get_baseline_estimator(), {}),
-        "logistic": (get_logistic_estimator(random_state), logistic_param_grid()),
+        "logistic": (
+            get_logistic_estimator(random_state),
+            logistic_param_grid(),
+        ),
         "xgboost": (get_xgboost_estimator(random_state), xgboost_param_grid()),
-        "catboost": (get_catboost_estimator(random_state), catboost_param_grid()),
-        "histboost": (get_histboost_estimator(random_state), histboost_param_grid()),
-        "ada_boost": (get_ada_boost_estimator(random_state), ada_boost_param_grid()),
+        "catboost": (
+            get_catboost_estimator(random_state),
+            catboost_param_grid(),
+        ),
+        "histboost": (
+            get_histboost_estimator(random_state),
+            histboost_param_grid(),
+        ),
+        "ada_boost": (
+            get_ada_boost_estimator(random_state),
+            ada_boost_param_grid(),
+        ),
     }
 
 

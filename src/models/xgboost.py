@@ -2,9 +2,7 @@ from xgboost import XGBClassifier
 
 
 def get_xgboost_estimator(random_state: int = 42):
-    return XGBClassifier(
-        random_state=random_state, eval_metric="logloss", n_jobs=-1
-    )
+    return XGBClassifier(random_state=random_state, eval_metric="logloss", n_jobs=-1)
 
 
 def xgboost_param_grid() -> dict:
