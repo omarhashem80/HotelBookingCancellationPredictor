@@ -1,5 +1,5 @@
-import unittest
 import pandas as pd
+import pytest
 
 from src.data.gx_validation import (
     compute_outliers_iqr,
@@ -9,28 +9,26 @@ from src.data.gx_validation import (
 )
 
 
-class TestOutliersIQR(unittest.TestCase):
-
+class TestOutliersIQR:
     def test_no_outliers(self):
         s = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         q1, q3, iqr, lower, upper, count, pct = compute_outliers_iqr(s)
-        self.assertEqual(count, 0)
-        self.assertEqual(pct, 0.0)
-        self.assertLess(q1, q3)
-        self.assertEqual(iqr, q3 - q1)
-        self.assertEqual(lower, q1 - 1.5 * iqr)
-        self.assertEqual(upper, q3 + 1.5 * iqr)
+        assert count == 0
+        assert pct == 0.0
+        assert q1 < q3
+        assert iqr == q3 - q1
+        assert lower == q1 - 1.5 * iqr
+        assert upper == q3 + 1.5 * iqr
 
     def test_with_outliers(self):
         s = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 100])
         _, _, _, _, upper, count, pct = compute_outliers_iqr(s)
-        self.assertGreater(count, 0)
-        self.assertGreater(pct, 0.0)
-        self.assertGreater(100, upper)
+        assert count > 0
+        assert pct > 0.0
+        assert 100 > upper
 
 
-class TestDateConsistency(unittest.TestCase):
-
+class TestDateConsistency:
     def test_clean(self):
         df = pd.DataFrame(
             {
@@ -41,7 +39,7 @@ class TestDateConsistency(unittest.TestCase):
             }
         )
         issues = check_date_consistency(df)
-        self.assertEqual(len(issues), 0)
+        assert len(issues) == 0
 
     def test_year_mismatch(self):
         df = pd.DataFrame(
@@ -53,7 +51,7 @@ class TestDateConsistency(unittest.TestCase):
             }
         )
         issues = check_date_consistency(df)
-        self.assertTrue(any("year" in i for i in issues))
+        assert any("year" in i for i in issues)
 
     def test_month_mismatch(self):
         df = pd.DataFrame(
@@ -65,7 +63,7 @@ class TestDateConsistency(unittest.TestCase):
             }
         )
         issues = check_date_consistency(df)
-        self.assertTrue(any("month" in i for i in issues))
+        assert any("month" in i for i in issues)
 
     def test_day_mismatch(self):
         df = pd.DataFrame(
@@ -77,16 +75,15 @@ class TestDateConsistency(unittest.TestCase):
             }
         )
         issues = check_date_consistency(df)
-        self.assertTrue(any("day" in i for i in issues))
+        assert any("day" in i for i in issues)
 
     def test_missing_columns(self):
         df = pd.DataFrame({"some_col": [1, 2, 3]})
         issues = check_date_consistency(df)
-        self.assertEqual(len(issues), 0)
+        assert len(issues) == 0
 
 
-class TestReservationConsistency(unittest.TestCase):
-
+class TestReservationConsistency:
     def test_clean(self):
         df = pd.DataFrame(
             {
@@ -98,7 +95,7 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertEqual(len(issues), 0)
+        assert len(issues) == 0
 
     def test_canceled_but_checkout(self):
         df = pd.DataFrame(
@@ -111,7 +108,7 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertTrue(any("is_canceled=1 but reservation_status=Check-Out" in i for i in issues))
+        assert any("is_canceled=1 but reservation_status=Check-Out" in i for i in issues)
 
     def test_not_canceled_but_canceled_status(self):
         df = pd.DataFrame(
@@ -124,7 +121,7 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertTrue(any("is_canceled=0 but reservation_status=Canceled" in i for i in issues))
+        assert any("is_canceled=0 but reservation_status=Canceled" in i for i in issues)
 
     def test_zero_guests(self):
         df = pd.DataFrame(
@@ -137,7 +134,7 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertTrue(any("zero total guests" in i for i in issues))
+        assert any("zero total guests" in i for i in issues)
 
     def test_holiday_inconsistency(self):
         df = pd.DataFrame(
@@ -153,16 +150,15 @@ class TestReservationConsistency(unittest.TestCase):
             }
         )
         issues = check_reservation_consistency(df)
-        self.assertTrue(any("is_holiday=1" in i for i in issues))
+        assert any("is_holiday=1" in i for i in issues)
 
 
-class TestAppendValueCounts(unittest.TestCase):
-
+class TestAppendValueCounts:
     def test_basic(self):
         lines = []
         s = pd.Series(["A", "A", "B"])
         _append_value_counts(lines, "Test", s, 3)
         text = "\n".join(lines)
-        self.assertIn("Test", text)
-        self.assertIn("A", text)
-        self.assertIn("B", text)
+        assert "Test" in text
+        assert "A" in text
+        assert "B" in text

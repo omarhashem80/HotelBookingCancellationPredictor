@@ -1,6 +1,8 @@
 import pandas as pd
 from loguru import logger
 
+from src.models.trainer import group_rare_categories
+
 CATEGORICAL_COLS = [
     "hotel",
     "arrival_date_month",
@@ -125,10 +127,9 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(
         "Dropped duplicates: {} -> {} rows", original_rows, len(cleaned)
     )
-    for col, k in (("agent", 10), ("country", 5)):
+    for col in CATEGORICAL_COLS:
         if col in df.columns:
-            cleaned = reduce_cardinality(cleaned, col, k)
-            logger.info("Reduced cardinality for {} to top_k={}", col, k)
+            cleaned = group_rare_categories(cleaned, col, 900)
     cleaned = fill_missing_values(cleaned)
     cleaned = clean_dtypes(cleaned)
     columns_exist = all([_ in df.columns.tolist() for _ in cols_to_check])

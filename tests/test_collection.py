@@ -1,6 +1,6 @@
-import unittest
 from datetime import date, datetime
 import numpy as np
+import pytest
 
 from src.data.collection import (
     alpha3_to_alpha2,
@@ -10,145 +10,154 @@ from src.data.collection import (
 )
 
 
-class TestAlpha3ToAlpha2(unittest.TestCase):
-    def test_valid_code(self):
-        self.assertEqual(alpha3_to_alpha2("USA"), "US")
-        self.assertEqual(alpha3_to_alpha2("GBR"), "GB")
-        self.assertEqual(alpha3_to_alpha2("DEU"), "DE")
+class TestAlpha3ToAlpha2:
+    @pytest.mark.parametrize(
+        "code,expected",
+        [
+            ("USA", "US"),
+            ("GBR", "GB"),
+            ("DEU", "DE"),
+        ],
+    )
+    def test_valid_code(self, code, expected):
+        assert alpha3_to_alpha2(code) == expected
 
     def test_lowercase_input(self):
-        self.assertEqual(alpha3_to_alpha2("usa"), "US")
+        assert alpha3_to_alpha2("usa") == "US"
 
     def test_with_whitespace(self):
-        self.assertEqual(alpha3_to_alpha2("  USA  "), "US")
+        assert alpha3_to_alpha2("  USA  ") == "US"
 
     def test_none_input(self):
-        self.assertIsNone(alpha3_to_alpha2(None))
+        assert alpha3_to_alpha2(None) is None
 
     def test_empty_string(self):
-        self.assertIsNone(alpha3_to_alpha2(""))
+        assert alpha3_to_alpha2("") is None
 
     def test_null_string(self):
-        self.assertIsNone(alpha3_to_alpha2("NULL"))
+        assert alpha3_to_alpha2("NULL") is None
 
     def test_invalid_code(self):
-        self.assertIsNone(alpha3_to_alpha2("XYZ"))
+        assert alpha3_to_alpha2("XYZ") is None
 
     def test_nan_input(self):
-        self.assertIsNone(alpha3_to_alpha2(float("nan")))
+        assert alpha3_to_alpha2(float("nan")) is None
 
 
-class TestParseDate(unittest.TestCase):
-
+class TestParseDate:
     def test_iso_string(self):
         entry = {"date": {"iso": "2023-12-25"}}
-        self.assertEqual(_parse_date(entry), date(2023, 12, 25))
+        assert _parse_date(entry) == date(2023, 12, 25)
 
     def test_iso_with_time(self):
         entry = {"date": {"iso": "2023-12-25T00:00:00"}}
-        self.assertEqual(_parse_date(entry), date(2023, 12, 25))
+        assert _parse_date(entry) == date(2023, 12, 25)
 
     def test_datetime_dict(self):
         entry = {"date": {"datetime": {"year": 2023, "month": 12, "day": 25}}}
-        self.assertEqual(_parse_date(entry), date(2023, 12, 25))
+        assert _parse_date(entry) == date(2023, 12, 25)
 
     def test_empty_entry(self):
-        self.assertIsNone(_parse_date({}))
+        assert _parse_date({}) is None
 
     def test_missing_date_key(self):
-        self.assertIsNone(_parse_date({"name": "Christmas"}))
+        assert _parse_date({"name": "Christmas"}) is None
 
     def test_invalid_iso(self):
         entry = {"date": {"iso": "not-a-date"}}
-        self.assertIsNone(_parse_date(entry))
+        assert _parse_date(entry) is None
 
     def test_incomplete_datetime_dict(self):
         entry = {"date": {"datetime": {"year": 2023}}}
-        self.assertIsNone(_parse_date(entry))
+        assert _parse_date(entry) is None
 
 
-class TestExtractHolidays(unittest.TestCase):
-
+class TestExtractHolidays:
     def test_normal_response(self):
         data = {
             "meta": {"code": 200},
             "response": {"holidays": [{"name": "Christmas"}]},
         }
         result = _extract_holidays(data, "US", 2023)
-        self.assertEqual(result, [{"name": "Christmas"}])
+        assert result == [{"name": "Christmas"}]
 
     def test_error_code(self):
         data = {"meta": {"code": 401, "error_detail": "Unauthorized"}}
         result = _extract_holidays(data, "US", 2023)
-        self.assertIsNone(result)
+        assert result is None
 
     def test_response_is_list(self):
         data = {"meta": {"code": 200}, "response": [{"name": "New Year"}]}
         result = _extract_holidays(data, "US", 2023)
-        self.assertEqual(result, [{"name": "New Year"}])
+        assert result == [{"name": "New Year"}]
 
     def test_empty_holidays(self):
         data = {"meta": {"code": 200}, "response": {"holidays": []}}
         result = _extract_holidays(data, "US", 2023)
-        self.assertEqual(result, [])
+        assert result == []
 
     def test_missing_meta(self):
         data = {"response": {"holidays": [{"name": "Test"}]}}
         result = _extract_holidays(data, "US", 2023)
-        self.assertEqual(result, [{"name": "Test"}])
+        assert result == [{"name": "Test"}]
 
 
-class TestCalcHolidayFeatures(unittest.TestCase):
+@pytest.fixture
+def holiday_dict():
+    return {
+        ("US", 2022): [date(2022, 12, 25), date(2022, 12, 31)],
+        ("US", 2023): [
+            date(2023, 1, 1),
+            date(2023, 7, 4),
+            date(2023, 12, 25),
+        ],
+        ("US", 2024): [date(2024, 1, 1)],
+    }
 
-    def setUp(self):
-        self.holiday_dict = {
-            ("US", 2022): [date(2022, 12, 25), date(2022, 12, 31)],
-            ("US", 2023): [
-                date(2023, 1, 1),
-                date(2023, 7, 4),
-                date(2023, 12, 25),
-            ],
-            ("US", 2024): [date(2024, 1, 1)],
-        }
 
-    def test_on_holiday(self):
+class TestCalcHolidayFeatures:
+    def test_on_holiday(self, holiday_dict):
         arrival = datetime(2023, 7, 4)
-        is_hol, to_next, from_last = calc_holiday_features(arrival, "US", self.holiday_dict, 2023)
-        self.assertEqual(is_hol, 1)
-        self.assertEqual(from_last, 0)
+        is_hol, to_next, from_last = calc_holiday_features(
+            arrival, "US", holiday_dict, 2023
+        )
+        assert is_hol == 1
+        assert from_last == 0
 
-    def test_not_on_holiday(self):
+    def test_not_on_holiday(self, holiday_dict):
         arrival = datetime(2023, 7, 5)
-        is_hol, to_next, from_last = calc_holiday_features(arrival, "US", self.holiday_dict, 2023)
-        self.assertEqual(is_hol, 0)
-        self.assertEqual(from_last, 1)
+        is_hol, to_next, from_last = calc_holiday_features(
+            arrival, "US", holiday_dict, 2023
+        )
+        assert is_hol == 0
+        assert from_last == 1
 
-    def test_days_to_next(self):
+    def test_days_to_next(self, holiday_dict):
         arrival = datetime(2023, 7, 3)
-        is_hol, to_next, from_last = calc_holiday_features(arrival, "US", self.holiday_dict, 2023)
-        self.assertEqual(to_next, 1)
+        is_hol, to_next, from_last = calc_holiday_features(
+            arrival, "US", holiday_dict, 2023
+        )
+        assert to_next == 1
 
-    def test_none_arrival(self):
-        result = calc_holiday_features(None, "US", self.holiday_dict, 2023)
-        self.assertTrue(all(np.isnan(v) for v in result))
+    def test_none_arrival(self, holiday_dict):
+        result = calc_holiday_features(None, "US", holiday_dict, 2023)
+        assert all(np.isnan(v) for v in result)
 
-    def test_none_country(self):
+    def test_none_country(self, holiday_dict):
         arrival = datetime(2023, 7, 4)
-        result = calc_holiday_features(arrival, None, self.holiday_dict, 2023)
-        self.assertTrue(all(np.isnan(v) for v in result))
+        result = calc_holiday_features(arrival, None, holiday_dict, 2023)
+        assert all(np.isnan(v) for v in result)
 
-    def test_no_holidays_for_country(self):
+    def test_no_holidays_for_country(self, holiday_dict):
         arrival = datetime(2023, 7, 4)
-        result = calc_holiday_features(arrival, "ZZ", self.holiday_dict, 2023)
-        self.assertTrue(all(np.isnan(v) for v in result))
+        result = calc_holiday_features(arrival, "ZZ", holiday_dict, 2023)
+        assert all(np.isnan(v) for v in result)
 
-    def test_cross_year_boundary(self):
+    def test_cross_year_boundary(self, holiday_dict):
         arrival = datetime(2023, 12, 26)
-        is_hol, to_next, from_last = calc_holiday_features(arrival, "US", self.holiday_dict, 2023)
-        self.assertEqual(is_hol, 0)
-        self.assertEqual(from_last, 1)  # day after Dec 25
-        self.assertEqual(to_next, 6)  # Jan 1 2024
-
-
-if __name__ == "__main__":
-    unittest.main()
+        is_hol, to_next, from_last = calc_holiday_features(
+            arrival, "US", holiday_dict, 2023
+        )
+        assert is_hol == 0
+        assert from_last == 1  # day after Dec 25
+        assert to_next == 6  # Jan 1 2024
