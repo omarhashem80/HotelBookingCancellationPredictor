@@ -1,10 +1,13 @@
 import os
 import re
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Generator, Optional
 from urllib.parse import urlparse
 
 import mlflow
 from loguru import logger
+from mlflow.entities import Experiment, Run
 from mlflow.tracking import MlflowClient
 
 _WINDOWS_DRIVE_URI_RE = re.compile(r"^file:/+([A-Za-z]):/")
@@ -47,10 +50,38 @@ def _repair_experiment_if_needed(experiment_name: str) -> None:
     client.create_experiment(experiment_name)
 
 
-def setup_mlflow(tracking_uri: str, experiment_name: str = "hotel-cancellation") -> None:
-
+def setup_mlflow(
+    tracking_uri: str,
+    experiment_name: str = "hotel-cancellation",
+) -> Experiment:
     mlflow.set_tracking_uri(_normalize_tracking_uri(tracking_uri))
     logger.info("Configured MLflow tracking URI: {}", mlflow.get_tracking_uri())
     _repair_experiment_if_needed(experiment_name)
-    mlflow.set_experiment(experiment_name)
+    experiment = mlflow.set_experiment(experiment_name)
     logger.info("Using MLflow experiment: {}", experiment_name)
+    return experiment
+
+
+@contextmanager
+def start_run(
+    run_name: Optional[str] = None,
+    tags: Optional[dict] = None,
+    nested: bool = False,
+) -> Generator[Run, None, None]:
+    """Context manager that wraps mlflow.start_run and optionally sets tags."""
+    with mlflow.start_run(run_name=run_name, nested=nested) as run:
+        if tags:
+            mlflow.set_tags(tags)
+        logger.info(
+            "MLflow run started: name={}, run_id={}",
+            run_name or "<unnamed>",
+            run.info.run_id,
+        )
+        yield run
+        logger.info("MLflow run finished: run_id={}", run.info.run_id)
+
+
+def get_active_run_id() -> Optional[str]:
+    """Return the current active MLflow run ID, or None if no run is active."""
+    run = mlflow.active_run()
+    return run.info.run_id if run is not None else None
