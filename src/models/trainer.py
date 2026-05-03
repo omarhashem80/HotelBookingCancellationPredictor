@@ -124,7 +124,7 @@ def get_model_registry(random_state: int) -> dict[str, tuple[Any, dict]]:
             get_histboost_estimator(random_state),
             get_histboost_param_grid(),
         ),
-        "ada_boost": (
+        "adaboost": (
             get_ada_boost_estimator(random_state),
             get_ada_boost_param_grid(),
         ),
