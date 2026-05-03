@@ -23,7 +23,7 @@ class TestOutliersIQR(unittest.TestCase):
 
     def test_with_outliers(self):
         s = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 100])
-        _, _, _, lower, upper, count, pct = compute_outliers_iqr(s)
+        _, _, _, _, upper, count, pct = compute_outliers_iqr(s)
         self.assertGreater(count, 0)
         self.assertGreater(pct, 0.0)
         self.assertGreater(100, upper)

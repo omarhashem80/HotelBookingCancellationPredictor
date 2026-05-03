@@ -26,7 +26,6 @@ def run_preprocess() -> Path:
         "Cleaned data: rows={}, cols={}", cleaned.shape[0], cleaned.shape[1]
     )
     featured = build_features(cleaned)
-
     logger.info(
         "Built features: rows={}, cols={}",
         featured.shape[0],

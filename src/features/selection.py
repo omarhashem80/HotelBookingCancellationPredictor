@@ -3,9 +3,7 @@ from sklearn.base import BaseEstimator
 from xgboost import XGBClassifier
 
 
-def get_xgb_feature_selector(
-    random_state: int = 42, threshold: str = "median"
-) -> SelectFromModel:
+def get_xgb_feature_selector(random_state: int = 42, threshold: str = "median") -> SelectFromModel:
 
     estimator: BaseEstimator = XGBClassifier(
         n_estimators=100,

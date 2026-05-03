@@ -120,4 +120,5 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         logger.info(
             "Removed no-guest rows: {} -> {} rows", before, len(cleaned)
         )
+
     return cleaned.reset_index(drop=True)
