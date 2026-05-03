@@ -9,6 +9,13 @@ from src.data.preprocess import (
 )
 
 
+def _get_transformer(preprocessor, name):
+    return next(
+        transformer
+        for transformer_name, transformer, _ in preprocessor.transformers
+        if transformer_name == name
+    )
+
 
 def _build_df(n: int) -> pd.DataFrame:
     numerical_cols, categorical_cols, date_cols = get_types()
@@ -155,19 +162,19 @@ class TestBuildPreprocessor:
         assert build_preprocessor().remainder == "drop"
 
     def test_numeric_pipeline_steps(self):
-        num_pipeline = dict(build_preprocessor().transformers)["num"]
+        num_pipeline = _get_transformer(build_preprocessor(), "num")
         step_names = [name for name, _ in num_pipeline.steps]
         assert "imputer" in step_names
         assert "scaler" in step_names
 
     def test_categorical_pipeline_steps(self):
-        cat_pipeline = dict(build_preprocessor().transformers)["cat"]
+        cat_pipeline = _get_transformer(build_preprocessor(), "cat")
         step_names = [name for name, _ in cat_pipeline.steps]
         assert "imputer" in step_names
         assert "onehot" in step_names
 
     def test_month_pipeline_has_imputer(self):
-        mon_pipeline = dict(build_preprocessor().transformers)["mon"]
+        mon_pipeline = _get_transformer(build_preprocessor(), "mon")
         step_names = [name for name, _ in mon_pipeline.steps]
         assert "imputer" in step_names
 
