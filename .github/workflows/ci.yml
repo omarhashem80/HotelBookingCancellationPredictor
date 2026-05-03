@@ -44,7 +44,9 @@ jobs:
         run: poetry run python scripts/preprocess.py
 
       - name: Train Model
-        run: poetry run python scripts/train.py --models xgboost
+        run: |
+          rm -f reports/best_model.pkl reports/best_model_metrics.json
+          poetry run python scripts/train.py --models xgboost
         timeout-minutes: 30
 
       - name: Evaluate Model
