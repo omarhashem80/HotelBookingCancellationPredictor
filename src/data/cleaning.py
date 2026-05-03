@@ -66,9 +66,15 @@ nums = [
 
 
 def outlier_extraction(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    lower = df[col].quantile(0.01)
-    upper = df[col].quantile(0.99)
-    return df[(df[col] >= lower) & (df[col] <= upper)]
+    lower = round(df[col].quantile(0.01))
+    upper = round(df[col].quantile(0.99))
+    outlier_pct = ((df[col] < lower) | (df[col] > upper)).mean() * 100
+    print(
+        f"{col}: {outlier_pct:.2f}% outliers"
+        f"({(outlier_pct/100 * len(df)):.0f} rows)"
+    )
+    df[col] = df[col].clip(lower=lower, upper=upper)
+    return df
 
 
 def clean_dtypes(df: pd.DataFrame) -> pd.DataFrame:

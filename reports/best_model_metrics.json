@@ -1,9 +1,9 @@
 {
-  "model": "catboost",
-  "accuracy": 0.9979927739863509,
-  "precision": 0.9979105725031342,
-  "recall": 0.994792751510102,
-  "f1": 0.9963492229060186,
-  "false_negative_rate": 0.005207248489897938,
-  "cost_sensitive_score": -135.0
+  "model": "xgboost",
+  "accuracy": 0.9982226808852196,
+  "precision": 0.9981203007518797,
+  "recall": 0.9954176213288898,
+  "f1": 0.9967671290019814,
+  "false_negative_rate": 0.0045823786711101855,
+  "cost_sensitive_score": -119.0
 }
