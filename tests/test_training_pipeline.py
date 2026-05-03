@@ -87,7 +87,7 @@ def test_group_rare_categories_keeps_frequent_values_and_groups_rare_values():
 def test_model_registry_contains_expected_models():
     registry = get_model_registry(random_state=7)
 
-    assert {"baseline", "logistic", "xgboost", "catboost", "histboost", "ada_boost"} <= set(
+    assert {"baseline", "logistic", "xgboost", "catboost", "histboost", "adaboost"} <= set(
         registry
     )
     assert registry["baseline"][1] == {}
