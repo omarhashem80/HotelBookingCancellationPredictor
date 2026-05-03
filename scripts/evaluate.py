@@ -17,6 +17,7 @@ from src.evaluation.error_analysis import (
     segment_error_analysis,
 )
 from src.evaluation.metrics import calculate_classification_metrics
+from src.models.trainer import SCHEMA, enforce_schema
 from src.utils.io import load_csv, load_model
 from src.visualization.model_plots import plot_confusion, plot_roc
 
@@ -45,6 +46,7 @@ def main() -> None:
 
     df = load_csv(data_path)
     logger.info("Loaded processed data: rows={}, cols={}", df.shape[0], df.shape[1])
+    df = enforce_schema(df, SCHEMA)
     X = df.drop(columns=[settings.target_column])
     y = df[settings.target_column]
     _, X_test, _, y_test = train_test_split(
