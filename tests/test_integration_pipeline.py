@@ -49,8 +49,6 @@ def test_end_to_end_pipeline_small_dataframe() -> None:
 
     clean = clean_data(df)
     featured = build_features(clean)
-    # ensure is_canceled is int so group_rare_categories (min_freq=900) doesn't
-    # collapse both classes to "Other" on this small dataset
     featured["is_canceled"] = featured["is_canceled"].astype(int)
 
     X_train, X_test, y_train, y_test = spliter(featured)
