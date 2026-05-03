@@ -132,12 +132,11 @@ def spliter(df: pd.DataFrame, target_col: str = "is_canceled", test_size: float 
     )
 
 def train_single_model(
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
-    X_test: pd.DataFrame,
-    y_test: pd.Series,
+    df: pd.DataFrame,
     model_name: str,
+    target_col: str = "is_canceled",
     random_state: int = 42,
+    test_size: float = 0.2,
     selector: Optional[Any] = None,
     sampler: Optional[Any] = None,
     cv_splits: int = 5,
@@ -149,6 +148,10 @@ def train_single_model(
         raise ValueError(f"Unknown model: {model_name}")
 
     logger.info("Starting training: {}", model_name)
+
+    X_train, X_test, y_train, y_test = spliter(
+        df, target_col=target_col, test_size=test_size, random_state=random_state
+    )
 
     logger.info(
         "Split done: train={}, test={}",

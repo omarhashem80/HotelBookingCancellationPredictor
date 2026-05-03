@@ -48,7 +48,7 @@ SCHEMA = {
     # binary
     "is_repeated_guest": "binary",
     "is_holiday": "binary",
-    # "is_canceled": "binary",
+    "is_canceled": "binary",
 
     # numeric (no need to split int types)
     "arrival_date_year": "numeric",
