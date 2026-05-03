@@ -116,7 +116,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
                 & (cleaned["children"] == 0)
                 & (cleaned["babies"] == 0)
             )
-        ]  # drop rows where no guests.
+        ]
         logger.info(
             "Removed no-guest rows: {} -> {} rows", before, len(cleaned)
         )

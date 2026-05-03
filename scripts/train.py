@@ -143,6 +143,7 @@ def main() -> None:
                     y_pred,
                     result.X_test["adr"],
                     result.X_test["total_nights"],
+                    result.X_test["deposit_type"],
                 )
 
             log_params({"model_name": model_name, **result.best_params})
