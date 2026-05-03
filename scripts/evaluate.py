@@ -17,6 +17,7 @@ from src.evaluation.error_analysis import (
 )
 from src.evaluation.metrics import calculate_classification_metrics
 from src.utils.io import load_csv, load_model
+from src.utils.helpers import enforce_schema
 from src.visualization.model_plots import plot_confusion, plot_roc
 
 
@@ -36,16 +37,15 @@ def main() -> None:
     settings = get_settings()
     root = settings.project_root
 
-    data_path = root / "data/processed/hotel_bookings_processed.csv"
+    X_test_path = root / "data/processed/X_test.csv"
+    y_test_path = root / "data/processed/y_test.csv"
     model_path = root / "reports/best_model.pkl"
 
-    if not data_path.exists() or not model_path.exists():
+    if not X_test_path.exists() or not y_test_path or not model_path.exists():
         raise FileNotFoundError("Processed data or trained model not found. Run make train first.")
 
-    df = load_csv(data_path)
-    target_col = settings.target_column
-    X_test = df.drop(columns=[target_col])
-    y_test = df[target_col]
+    X_test = enforce_schema(load_csv(X_test_path))
+    y_test = load_csv(y_test_path).squeeze()
     logger.info("Loaded processed data: rows={}, cols={}", X_test.shape[0], X_test.shape[1])
 
     model = load_model(model_path)

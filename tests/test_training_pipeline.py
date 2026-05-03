@@ -7,6 +7,7 @@ from src.models.trainer import (
     enforce_schema,
     get_model_registry,
     run_model_pipeline,
+    spliter,
     train_single_model,
 )
 
@@ -66,12 +67,12 @@ def hotel_dataset():
 
 
 def test_enforce_schema_casts_configured_columns(hotel_dataset):
-    df = hotel_dataset.astype({"lead_time": "string", "is_canceled": "string"})
+    df = hotel_dataset.astype({"lead_time": "string", "is_repeated_guest": "string"})
 
     result = enforce_schema(df, supress_rare=True)
 
     assert pd.api.types.is_numeric_dtype(result["lead_time"])
-    assert result["is_canceled"].dtype == "int8"
+    assert result["is_repeated_guest"].dtype == "int8"
     assert pd.api.types.is_datetime64_any_dtype(result["arrival_date"])
     assert set(result["hotel"].astype(str)) == {"Other"}
 
@@ -100,8 +101,9 @@ def test_model_registry_contains_expected_models():
 
 
 def test_train_single_model_baseline_runs(hotel_dataset):
+    X_train, X_test, y_train, y_test = spliter(hotel_dataset)
     result = train_single_model(
-        hotel_dataset, model_name="baseline", cv_splits=2
+        X_train, y_train, X_test, y_test, model_name="baseline", cv_splits=2
     )
 
     assert isinstance(result, TrainingResult)
@@ -113,8 +115,9 @@ def test_train_single_model_baseline_runs(hotel_dataset):
 def test_train_single_model_logistic_returns_pipeline_and_test_split(
     hotel_dataset,
 ):
+    X_train, X_test, y_train, y_test = spliter(hotel_dataset)
     result = train_single_model(
-        hotel_dataset, model_name="logistic", cv_splits=2
+        X_train, y_train, X_test, y_test, model_name="logistic", cv_splits=2
     )
 
     assert hasattr(result.best_model, "named_steps")
@@ -125,8 +128,9 @@ def test_train_single_model_logistic_returns_pipeline_and_test_split(
 
 
 def test_metrics_are_valid(hotel_dataset):
+    X_train, X_test, y_train, y_test = spliter(hotel_dataset)
     result = train_single_model(
-        hotel_dataset, model_name="logistic", cv_splits=2
+        X_train, y_train, X_test, y_test, model_name="logistic", cv_splits=2
     )
 
     for key in ["accuracy", "f1", "precision", "recall"]:
@@ -134,8 +138,9 @@ def test_metrics_are_valid(hotel_dataset):
 
 
 def test_unknown_model_raises_error(hotel_dataset):
+    X_train, X_test, y_train, y_test = spliter(hotel_dataset)
     with pytest.raises(ValueError, match="Unknown model"):
-        train_single_model(hotel_dataset, model_name="invalid_model")
+        train_single_model(X_train, y_train, X_test, y_test, model_name="invalid_model")
 
 
 def test_run_model_pipeline_direct(hotel_dataset):
